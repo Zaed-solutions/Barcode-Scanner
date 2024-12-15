@@ -1,4 +1,4 @@
-package com.zaed.scanqrcode.ui.util
+package com.zaed.barcodescanner.ui.util
 
 import androidx.compose.ui.graphics.Color
 

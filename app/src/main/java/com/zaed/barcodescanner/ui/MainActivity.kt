@@ -1,4 +1,4 @@
-package com.zaed.scanqrcode.ui
+package com.zaed.barcodescanner.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -11,8 +11,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
-import com.zaed.scanqrcode.app.navigation.NavigationHost
-import com.zaed.scanqrcode.ui.theme.ScanQrCodeTheme
+import com.zaed.barcodescanner.app.navigation.NavigationHost
+import com.zaed.barcodescanner.ui.theme.ScanQrCodeTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

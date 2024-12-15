@@ -1,4 +1,4 @@
-package com.zaed.scanqrcode.app.di
+package com.zaed.barcodescanner.app.di
 
 import org.koin.dsl.module
 

@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "com.zaed.scanqrcode"
+    namespace = "com.zaed.barcodescanner"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.zaed.scanqrcode"
+        applicationId = "com.zaed.barcodescanner"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

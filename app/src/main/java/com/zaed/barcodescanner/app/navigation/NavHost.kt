@@ -1,4 +1,4 @@
-package com.zaed.scanqrcode.app.navigation
+package com.zaed.barcodescanner.app.navigation
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween

@@ -1,4 +1,4 @@
-package com.zaed.scanqrcode
+package com.zaed.barcodescanner
 
 import org.junit.Test
 

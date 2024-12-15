@@ -1,4 +1,4 @@
-package com.zaed.scanqrcode.ui.components
+package com.zaed.barcodescanner.ui.components
 
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -21,7 +21,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.zaed.scanqrcode.ui.theme.ScanQrCodeTheme
+import com.zaed.barcodescanner.ui.theme.ScanQrCodeTheme
 
 fun Modifier.shimmerEffect(): Modifier = composed {
     var size by remember {

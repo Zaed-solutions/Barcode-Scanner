@@ -1,4 +1,4 @@
-package com.zaed.scanqrcode.ui.theme
+package com.zaed.barcodescanner.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

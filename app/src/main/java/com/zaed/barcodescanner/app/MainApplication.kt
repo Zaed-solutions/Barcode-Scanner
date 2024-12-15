@@ -1,7 +1,7 @@
-package com.zaed.scanqrcode.app
+package com.zaed.barcodescanner.app
 
 import android.app.Application
-import com.zaed.scanqrcode.app.di.appModule
+import com.zaed.barcodescanner.app.di.appModule
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import org.koin.android.ext.koin.androidContext

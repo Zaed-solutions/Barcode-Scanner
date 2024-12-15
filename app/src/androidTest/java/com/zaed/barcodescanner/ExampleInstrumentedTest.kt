@@ -1,4 +1,4 @@
-package com.zaed.scanqrcode
+package com.zaed.barcodescanner
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

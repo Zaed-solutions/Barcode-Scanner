@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Project Template"
+rootProject.name = "Barcode Scanner"
 include(":app")
