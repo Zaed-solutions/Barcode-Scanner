@@ -25,8 +25,30 @@ class MainViewModel: ViewModel() {
             is MainUiAction.OnAddNewProductImage -> {
                 addNewProductImage(action.folderName, action.uri)
             }
+            is MainUiAction.OnDeleteProductImage -> deleteProductImage(action.folderName, action.imageUri)
+            MainUiAction.OnUploadFolders -> uploadFolders()
             else -> Unit
         }
+    }
+
+    private fun deleteProductImage(folderName: String, imageUri: Uri) {
+        viewModelScope.launch {
+            _uiState.update { oldState ->
+                oldState.copy(
+                    folders = oldState.folders.map { folder ->
+                        if(folder.name == folderName){
+                            folder.copy(images = folder.images.filter { it.uri != imageUri })
+                        } else {
+                            folder
+                        }
+                    }
+                )
+            }
+        }
+    }
+
+    private fun uploadFolders() {
+        TODO("Not yet implemented")
     }
 
     private fun addNewProductImage(folderName: String, uri: Uri) {

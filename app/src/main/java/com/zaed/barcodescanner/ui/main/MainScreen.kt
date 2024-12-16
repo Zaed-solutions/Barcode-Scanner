@@ -5,17 +5,24 @@ import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -23,11 +30,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
@@ -36,6 +47,7 @@ import com.zaed.barcodescanner.data.models.ProductsFolder
 import com.zaed.barcodescanner.ui.main.components.ConfirmDeleteDialog
 import com.zaed.barcodescanner.ui.main.components.FoldersList
 import com.zaed.barcodescanner.ui.util.createImageFile
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 
@@ -48,6 +60,10 @@ fun MainScreen(
     LaunchedEffect (true){
         Log.d(TAG, "MainScreen: LaunchedEffect")
     }
+    val snackbarHostState = remember {
+        SnackbarHostState()
+    }
+    val scope = rememberCoroutineScope()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var selectedFolder by remember {
@@ -61,6 +77,9 @@ fun MainScreen(
                 Log.d(TAG, "MainScreen: Image capture successful.")
                 viewModel.handleAction(MainUiAction.OnAddNewProductImage(selectedFolder, photoUri?:Uri.EMPTY))
             } else {
+                scope.launch {
+                    snackbarHostState.showSnackbar(context.getString(R.string.image_capture_failed))
+                }
                 Log.d(TAG, "Image capture failed.")
             }
         }
@@ -86,11 +105,23 @@ fun MainScreen(
                     val scanner = GmsBarcodeScanning.getClient(context, options)
                     scanner.startScan().addOnSuccessListener { barCode ->
                         Log.d("Barcode", "${ barCode.rawValue }")
-                        viewModel.handleAction(MainUiAction.OnAddNewFolder(barCode.rawValue?:""))
+                        if(!barCode.rawValue.isNullOrBlank() && state.folders.none {  it.name == barCode.rawValue}) {
+                            viewModel.handleAction(MainUiAction.OnAddNewFolder(barCode.rawValue?:""))
+                        } else {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(context.getString(R.string.folder_already_exists))
+                            }
+                        }
                     }.addOnCanceledListener {
                         Log.e("Barcode", "Cancelled")
+                        scope.launch {
+                            snackbarHostState.showSnackbar(context.getString(R.string.barcode_scan_cancelled))
+                        }
                     }.addOnFailureListener { e ->
                         Log.e("Barcode", "Failed: ${e.message}")
+                        scope.launch {
+                            snackbarHostState.showSnackbar(context.getString(R.string.barcode_scan_failed))
+                        }
                     }
                 }
                 else -> viewModel.handleAction(action)
@@ -118,10 +149,30 @@ fun MainScreenContent(
         topBar = {
             TopAppBar(
                 title = {
-
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_logo),
+                            contentDescription = null,
+                            modifier = Modifier.size(32.dp)
+                        )
+                        Text(
+                            text = stringResource(R.string.app_name),
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    }
                 },
                 actions = {
-
+                    TextButton(
+                        onClick = {
+                            onAction(MainUiAction.OnUploadFolders)
+                        }
+                    ) {
+                        Text(
+                            text = stringResource(R.string.upload)
+                        )
+                    }
                 }
             )
         },
@@ -150,6 +201,9 @@ fun MainScreenContent(
                 folders = folders,
                 onAddImageClicked = { folderName ->
                     onAction(MainUiAction.OnAddProductImageClicked(folderName))
+                },
+                onDeleteImage = { folderName, uri ->
+                    onAction(MainUiAction.OnDeleteProductImage(folderName, uri))
                 },
                 onDeleteFolderClicked = {folderName ->
                     selectedFolderName = folderName

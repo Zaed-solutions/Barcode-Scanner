@@ -1,5 +1,6 @@
 package com.zaed.barcodescanner.ui.main.components
 
+import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +36,7 @@ fun FolderItem(
     modifier: Modifier = Modifier,
     folder: ProductsFolder,
     onAddImageClicked: () -> Unit,
+    onDeleteImage: (Uri) -> Unit = {},
     onDeleteFolderClicked: () -> Unit,
 ) {
     var isExpanded by remember{
@@ -103,7 +105,8 @@ fun FolderItem(
             }
             androidx.compose.animation.AnimatedVisibility(visible = isExpanded) {
                 ProductImagesList(
-                    images = folder.images
+                    images = folder.images,
+                    onDeleteImage = onDeleteImage
                 )
             }
             Icon(

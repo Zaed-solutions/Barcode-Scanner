@@ -7,4 +7,9 @@
     <string name="cancel">Cancel</string>
     <string name="confirm">Confirm</string>
     <string name="folder">Folder</string>
+    <string name="image_capture_failed">Image capture failed.</string>
+    <string name="folder_already_exists">Folder already exists!</string>
+    <string name="barcode_scan_failed">Barcode scanning failed!</string>
+    <string name="barcode_scan_cancelled">Barcode scanning was cancelled.</string>
+    <string name="upload">Upload</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.zaed.barcodescanner.ui.main.components
 
+import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,6 +17,7 @@ fun FoldersList(
     modifier: Modifier = Modifier,
     folders: List<ProductsFolder>,
     onAddImageClicked: (folderName: String) -> Unit = {},
+    onDeleteImage: (folderName: String, imageUri: Uri) -> Unit = { _, _ ->},
     onDeleteFolderClicked: (folderName: String) -> Unit = {},
 ) {
     LazyColumn (
@@ -32,6 +34,9 @@ fun FoldersList(
                 },
                 onDeleteFolderClicked = {
                     onDeleteFolderClicked(folder.name)
+                },
+                onDeleteImage = { uri ->
+                    onDeleteImage(folder.name, uri)
                 }
             )
         }
