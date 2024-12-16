@@ -87,10 +87,6 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     //Material3 Extended Icons
     implementation(libs.androidx.material.icons.extended)
-    //Realm
-    implementation (libs.realm.base)
-    //Realm - If using Device Sync
-    implementation (libs.realm.sync)
     //Kotlinx-Coroutines
     implementation (libs.kotlinx.coroutines.core)
     //Coil
@@ -109,4 +105,6 @@ dependencies {
     implementation(libs.androidx.ui.text.google.fonts)
     //Lottie
     implementation(libs.lottie.compose)
+    //google code scanner
+    implementation(libs.play.services.code.scanner)
 }

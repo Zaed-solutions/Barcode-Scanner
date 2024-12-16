@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">Scan QR Code</string>
+    <string name="images_temp">%1$s images</string>
+    <string name="code_temp">Code: %1$s</string>
+    <string name="are_you_sure_you_want_to_delete_this">Are you sure you want to delete this</string>
+    <string name="this_action_cannot_be_undone">This action cannot be undone</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="folder">Folder</string>
 </resources>

@@ -21,7 +21,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.zaed.barcodescanner.ui.theme.ScanQrCodeTheme
+import com.zaed.barcodescanner.ui.theme.BarcodeScannerTheme
 
 fun Modifier.shimmerEffect(): Modifier = composed {
     var size by remember {
@@ -63,7 +63,7 @@ fun Modifier.shimmerEffect(): Modifier = composed {
 @Preview(showSystemUi = true, showBackground = true)
 @Composable
 private fun ShimmerPreview() {
-    ScanQrCodeTheme {
+    BarcodeScannerTheme {
         Box(
             modifier = Modifier
                 .size(height = 150.dp, width = 300.dp)

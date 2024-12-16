@@ -1,6 +1,7 @@
 package com.zaed.barcodescanner.ui
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -12,14 +13,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.zaed.barcodescanner.app.navigation.NavigationHost
-import com.zaed.barcodescanner.ui.theme.ScanQrCodeTheme
+import com.zaed.barcodescanner.ui.theme.BarcodeScannerTheme
+
 
 class MainActivity : ComponentActivity() {
+    companion object{
+        private const val TAG = "MainActivity"
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d(TAG, "onCreate")
         enableEdgeToEdge()
         setContent {
-            ScanQrCodeTheme {
+            BarcodeScannerTheme {
                 App()
             }
         }

@@ -20,6 +20,7 @@ kotlinComposeCompilerPluginEmbeddable = "2.0.0"
 composeBom = "2024.08.00"
 coilCompose = "2.7.0"
 materialIconsExtended = "1.7.0-rc01"
+playServicesCodeScanner = "16.1.0"
 realm = "2.0.0"
 kotlinx-coroutines = "1.8.1"
 ktor-client = "2.3.12"
@@ -52,6 +53,7 @@ kotlin-compose-compiler-plugin = { module = "org.jetbrains.kotlin:kotlin-compose
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor-client" }
 kotlin-compose-compiler-plugin-embeddable = { module = "org.jetbrains.kotlin:kotlin-compose-compiler-plugin-embeddable", version.ref = "kotlinComposeCompilerPluginEmbeddable" }
 lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "lottieCompose" }
+play-services-code-scanner = { module = "com.google.android.gms:play-services-code-scanner", version.ref = "playServicesCodeScanner" }
 realm-base = { module = "io.realm.kotlin:library-base", version.ref = "realm" }
 realm-sync = { module = "io.realm.kotlin:library-sync", version.ref = "realm" }
 
