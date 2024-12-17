@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.zaed.barcodescanner.app.navigation.NavigationHost
+import com.zaed.barcodescanner.ui.main.MainScreen
 import com.zaed.barcodescanner.ui.theme.BarcodeScannerTheme
 
 
@@ -26,7 +27,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             BarcodeScannerTheme {
-                App()
+                MainScreen()
             }
         }
     }

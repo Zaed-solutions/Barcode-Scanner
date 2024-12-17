@@ -9,6 +9,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -17,6 +18,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -57,6 +59,7 @@ fun MainScreen(
     modifier: Modifier = Modifier,
     viewModel: MainViewModel = koinViewModel(),
 ) {
+//    viewModel.getAllFiles()
     LaunchedEffect (true){
         Log.d(TAG, "MainScreen: LaunchedEffect")
     }
@@ -86,6 +89,7 @@ fun MainScreen(
     MainScreenContent(
         modifier = modifier,
         folders = state.folders,
+        progress = state.progress,
         onAction = { action ->
             when(action){
                 is MainUiAction.OnAddProductImageClicked -> {
@@ -136,6 +140,7 @@ fun MainScreen(
 fun MainScreenContent(
     modifier: Modifier = Modifier,
     folders: List<ProductsFolder>,
+    progress: Double,
     onAction: (MainUiAction) -> Unit,
 ) {
     var selectedFolderName by remember {
@@ -195,6 +200,13 @@ fun MainScreenContent(
                 .fillMaxSize()
                 .padding(innerPadding)
         ){
+            // TODO TO TEST UPLOAD PROGRESS
+            if (progress > 0) {
+                LinearProgressIndicator(
+                    progress = progress.toFloat()/100,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
             FoldersList(
                 modifier = Modifier
                     .fillMaxSize(),
