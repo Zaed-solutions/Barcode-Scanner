@@ -1,6 +1,7 @@
 package com.zaed.barcodescanner.ui.main.components
 
 import android.net.Uri
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,13 +20,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
+import com.zaed.barcodescanner.R
 import com.zaed.barcodescanner.data.models.ProductImage
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -35,16 +39,29 @@ fun ProductImagesList(
     images: List<ProductImage>,
     onDeleteImage: (Uri) -> Unit = {},
 ) {
-    FlowRow(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        images.forEach { image ->
-            ProductImageItem(
-                image = image,
-                onDeleteImage = { onDeleteImage(image.uri) }
-            )
+    AnimatedContent (targetState = images.isEmpty()){ state ->
+        when{
+            state -> {
+                Text(
+                    modifier = modifier.padding(top = 16.dp),
+                    text = stringResource(R.string.no_images_added_yet),
+                    style = MaterialTheme.typography.titleLarge,
+                )
+            }
+            else -> {
+                FlowRow(
+                    modifier = modifier,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    images.forEach { image ->
+                        ProductImageItem(
+                            image = image,
+                            onDeleteImage = { onDeleteImage(image.uri) }
+                        )
+                    }
+                }
+            }
         }
     }
 }

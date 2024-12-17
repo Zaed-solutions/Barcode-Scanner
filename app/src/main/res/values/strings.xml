@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Scan QR Code</string>
+    <string name="app_name">Barcode Scanner</string>
     <string name="images_temp">%1$s images</string>
     <string name="code_temp">Code: %1$s</string>
     <string name="are_you_sure_you_want_to_delete_this">Are you sure you want to delete this</string>
@@ -12,4 +12,6 @@
     <string name="barcode_scan_failed">Barcode scanning failed!</string>
     <string name="barcode_scan_cancelled">Barcode scanning was cancelled.</string>
     <string name="upload">Upload</string>
+    <string name="no_folders_added_yet">No folders added yet</string>
+    <string name="no_images_added_yet">No images added yet</string>
 </resources>

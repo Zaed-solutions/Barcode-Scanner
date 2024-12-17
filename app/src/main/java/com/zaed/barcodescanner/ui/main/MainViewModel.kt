@@ -63,8 +63,8 @@ class MainViewModel(
     //TODO BY ZAREA
     private fun uploadFolders() {
         viewModelScope.launch(Dispatchers.IO) {
-            googleAuth.getSignedInAccount().collect {
-                it.onSuccess { account ->
+            googleAuth.getSignedInAccount().collect { result ->
+                result.onSuccess { account ->
                     Log.d("UPLOAD_SUCCESS", "${account.email}")
                     uiState.value.folders.forEach { folder ->
                         val folderId = driveRemoteSource.createFolder(account, folder.name)
@@ -77,8 +77,8 @@ class MainViewModel(
                                 folderId = folderId
                             ).collect{result->
                                 result.onSuccess {data->
-                                    _uiState.update {
-                                        it.copy(progress = data)
+                                    _uiState.update { oldState ->
+                                        oldState.copy(progress = data)
                                     }
                                     Log.d("UPLOAD_SUCCESS", "uploadFolders: $data")
                                 }

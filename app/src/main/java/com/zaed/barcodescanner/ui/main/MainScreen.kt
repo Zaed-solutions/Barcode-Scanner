@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,6 +23,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -59,7 +61,6 @@ fun MainScreen(
     modifier: Modifier = Modifier,
     viewModel: MainViewModel = koinViewModel(),
 ) {
-//    viewModel.getAllFiles()
     LaunchedEffect (true){
         Log.d(TAG, "MainScreen: LaunchedEffect")
     }
@@ -90,6 +91,7 @@ fun MainScreen(
         modifier = modifier,
         folders = state.folders,
         progress = state.progress,
+        hostState = snackbarHostState,
         onAction = { action ->
             when(action){
                 is MainUiAction.OnAddProductImageClicked -> {
@@ -139,6 +141,7 @@ fun MainScreen(
 @Composable
 fun MainScreenContent(
     modifier: Modifier = Modifier,
+    hostState: SnackbarHostState,
     folders: List<ProductsFolder>,
     progress: Double,
     onAction: (MainUiAction) -> Unit,
@@ -151,20 +154,23 @@ fun MainScreenContent(
     }
     Scaffold(
         modifier = modifier,
+        snackbarHost = { SnackbarHost(hostState) },
         topBar = {
             TopAppBar(
                 title = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Image(
+                        Icon(
                             painter = painterResource(id = R.drawable.ic_logo),
                             contentDescription = null,
+                            tint  =MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(32.dp)
                         )
                         Text(
                             text = stringResource(R.string.app_name),
-                            style = MaterialTheme.typography.titleLarge
+                            style = MaterialTheme.typography.titleLarge,
+                            modifier = Modifier.padding(start = 8.dp)
                         )
                     }
                 },
@@ -195,21 +201,22 @@ fun MainScreenContent(
         },
         floatingActionButtonPosition = FabPosition.Center
     ) { innerPadding ->
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(innerPadding),
+            horizontalAlignment = Alignment.CenterHorizontally
         ){
             // TODO TO TEST UPLOAD PROGRESS
             if (progress > 0) {
                 LinearProgressIndicator(
-                    progress = progress.toFloat()/100,
+                    progress = { progress.toFloat()/100 },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
             FoldersList(
                 modifier = Modifier
-                    .fillMaxSize(),
+                    .fillMaxWidth(),
                 folders = folders,
                 onAddImageClicked = { folderName ->
                     onAction(MainUiAction.OnAddProductImageClicked(folderName))
