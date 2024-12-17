@@ -10,7 +10,20 @@ plugins {
 android {
     namespace = "com.zaed.barcodescanner"
     compileSdk = 34
-
+    packaging {
+        resources {
+            excludes += setOf(
+                "META-INF/DEPENDENCIES",
+                "META-INF/LICENSE",
+                "META-INF/LICENSE.txt",
+                "META-INF/license.txt",
+                "META-INF/NOTICE",
+                "META-INF/NOTICE.txt",
+                "META-INF/notice.txt",
+                "META-INF/ASL2.0"
+            )
+        }
+    }
     defaultConfig {
         applicationId = "com.zaed.barcodescanner"
         minSdk = 24
@@ -87,6 +100,10 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     //Material3 Extended Icons
     implementation(libs.androidx.material.icons.extended)
+    //Realm
+//    implementation (libs.realm.base)
+    //Realm - If using Device Sync
+//    implementation (libs.realm.sync)
     //Kotlinx-Coroutines
     implementation (libs.kotlinx.coroutines.core)
     //Coil
@@ -105,6 +122,12 @@ dependencies {
     implementation(libs.androidx.ui.text.google.fonts)
     //Lottie
     implementation(libs.lottie.compose)
+    implementation("com.google.api-client:google-api-client-android:1.33.0")
+    implementation ("com.google.api-client:google-api-client:2.0.0")
+    implementation ("com.google.oauth-client:google-oauth-client-jetty:1.34.1")
+    implementation ("com.google.apis:google-api-services-drive:v3-rev20220815-2.0.0")
+    implementation ("com.google.android.gms:play-services-auth:20.7.0")
+
     //google code scanner
     implementation(libs.play.services.code.scanner)
 }
