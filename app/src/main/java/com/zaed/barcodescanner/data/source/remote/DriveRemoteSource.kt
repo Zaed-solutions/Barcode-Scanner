@@ -31,6 +31,7 @@ interface DriveRemoteSource {
         fileUri: Uri,
         mimeType: String,
         fileName: String,
-        folderId: String
-    ): Flow<Result<Double>>
+        folderId: String,
+        folderName: String
+    ): Flow<Result<Pair<String,Float>>>
 }

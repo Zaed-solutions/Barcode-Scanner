@@ -130,4 +130,6 @@ dependencies {
 
     //google code scanner
     implementation(libs.play.services.code.scanner)
+    implementation("androidx.work:work-runtime-ktx:2.8.1")
+
 }

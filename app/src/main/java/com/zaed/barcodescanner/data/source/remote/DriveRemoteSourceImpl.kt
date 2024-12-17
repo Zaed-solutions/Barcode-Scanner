@@ -64,12 +64,12 @@ class DriveRemoteSourceImpl(
         fileUri: Uri,
         mimeType: String,
         fileName: String,
-        folderId: String
-    ): Flow<Result<Double>> = callbackFlow {
+        folderId: String,
+        folderName: String
+    ): Flow<Result<Pair<String,Float>>> = callbackFlow {
         val fileMetadata = com.google.api.services.drive.model.File().apply {
             name = fileName
             parents = Collections.singletonList(folderId)
-
         }
         val contentResolver: ContentResolver = context.contentResolver
         val inputStream: InputStream? = contentResolver.openInputStream(fileUri)
@@ -94,12 +94,12 @@ class DriveRemoteSourceImpl(
                     Log.d("UPLOAD_SUCCESS", "Upload progress: ${uploader.numBytesUploaded}")
                     when(uploader.uploadState){
                         MediaHttpUploader.UploadState.MEDIA_IN_PROGRESS -> {
-                            val progress = (uploader.progress *100)
-                            trySend(Result.success(progress))
+                            val progress = (uploader.progress).toFloat()
+                            trySend(Result.success(Pair(fileName,progress)))
                             Log.d("UPLOAD_SUCCESS", "Upload progress: $progress%")
                         }
                         MediaHttpUploader.UploadState.MEDIA_COMPLETE ->
-                            trySend(Result.success(100.0))
+                            trySend(Result.success(Pair(fileName,1.0f)))
                         else->{}
                     }
                 }

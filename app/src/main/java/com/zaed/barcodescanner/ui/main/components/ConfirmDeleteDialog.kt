@@ -52,11 +52,59 @@ fun ConfirmDeleteDialog(
                 Text(text = stringResource(id = R.string.cancel))
             }
             Button(
-                modifier = Modifier.widthIn(min = 100.dp).weight(1f),
+                modifier = Modifier
+                    .widthIn(min = 100.dp)
+                    .weight(1f),
                 onClick = { onConfirm() },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
             ) {
                 Text(text = stringResource(R.string.confirm))
+            }
+        }
+    }
+}
+
+@Composable
+fun ConfirmNavigateToLoginDialog(
+    modifier: Modifier = Modifier,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = stringResource(R.string.you_need_to_login_first_to_continue),
+            style = MaterialTheme.typography.titleLarge,
+        )
+        Text(
+            text = stringResource(R.string.some_operation_requires_login),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            TextButton(
+                modifier = Modifier
+                    .widthIn(min = 100.dp)
+                    .padding(end = 8.dp)
+                    .weight(1f),
+                onClick = { onDismiss() }
+            ) {
+                Text(text = stringResource(R.string.dismiss))
+            }
+            Button(
+                modifier = Modifier
+                    .widthIn(min = 100.dp)
+                    .weight(1f),
+                onClick = { onConfirm() },
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) {
+                Text(text = stringResource(R.string.login))
             }
         }
     }

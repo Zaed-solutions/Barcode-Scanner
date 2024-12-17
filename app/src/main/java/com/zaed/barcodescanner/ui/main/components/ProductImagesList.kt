@@ -5,7 +5,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -16,6 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -39,8 +39,8 @@ fun ProductImagesList(
     images: List<ProductImage>,
     onDeleteImage: (Uri) -> Unit = {},
 ) {
-    AnimatedContent (targetState = images.isEmpty()){ state ->
-        when{
+    AnimatedContent(targetState = images.isEmpty()) { state ->
+        when {
             state -> {
                 Text(
                     modifier = modifier.padding(top = 16.dp),
@@ -48,6 +48,7 @@ fun ProductImagesList(
                     style = MaterialTheme.typography.titleLarge,
                 )
             }
+
             else -> {
                 FlowRow(
                     modifier = modifier,
@@ -73,7 +74,7 @@ fun ProductImageItem(
     onDeleteImage: () -> Unit,
 ) {
     Surface(
-        modifier = modifier.size(100.dp),
+        modifier = modifier.size(height = 72.dp, width = 64.dp),
         shape = MaterialTheme.shapes.medium,
         border = BorderStroke(width = 0.5.dp, color = MaterialTheme.colorScheme.surfaceVariant),
         tonalElevation = 0.1.dp,
@@ -91,26 +92,51 @@ fun ProductImageItem(
                 contentDescription = "Attachment BackGround",
                 modifier = Modifier.fillMaxSize()
             )
-            IconButton(
-                onClick = { onDeleteImage() },
-                modifier = Modifier
-                    .padding(top = 4.dp, end = 4.dp)
-                    .size(16.dp)
-                    .align(Alignment.TopEnd)
+            AnimatedContent(
+                modifier = Modifier.fillMaxSize(),
+                targetState = image.uploadProgress > 0 && image.uploadProgress < 1
             ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "delete",
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier
-                        .size(16.dp)
-                        .background(
+                Box(modifier=Modifier.fillMaxSize().background(
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = if(it)0.5f else 0f)
+                )){
+                when {
+                    it -> {
+                        CircularProgressIndicator(
+                            progress = { image.uploadProgress },
+                            modifier = Modifier
+                                .padding(top = 4.dp, end = 4.dp).align(Alignment.Center),
                             color = MaterialTheme.colorScheme.primary,
-                            shape = CircleShape
                         )
-                        .padding(2.dp)
-                )
+                    }
+
+                    else -> {
+                        if (!image.isUploaded) {
+                            IconButton(
+                                onClick = { onDeleteImage() },
+                                modifier = Modifier
+                                    .padding(top = 4.dp, end = 4.dp)
+                                    .size(16.dp).align(Alignment.TopEnd)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "delete",
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier
+                                        .size(16.dp)
+                                        .background(
+                                            color = MaterialTheme.colorScheme.primary,
+                                            shape = CircleShape
+                                        )
+                                        .padding(2.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+                }
+
             }
+
         }
     }
 

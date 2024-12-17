@@ -1,6 +1,8 @@
 package com.zaed.barcodescanner.app
 
 import android.app.Application
+import androidx.work.Configuration
+import androidx.work.WorkManager
 import com.zaed.barcodescanner.app.di.appModule
 
 import org.koin.android.ext.koin.androidContext
@@ -19,6 +21,8 @@ class MainApplication : Application() {
             androidContext(this@MainApplication)
             modules(appModule)
         }
+//        WorkManager.initialize(applicationContext, Configuration.Builder().build())
+
 
 
 //        realm = Realm.open(

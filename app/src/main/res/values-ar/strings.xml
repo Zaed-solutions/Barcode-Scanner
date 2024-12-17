@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">قارئ الباركود</string>
+    <string name="images_uploaded">تم رفع %1$s من %2$s صورة</string>
+    <string name="main_screen">الصفحة الرئيسية</string>
+    <string name="manage_account">ادارة الحسابات</string>
+    <string name="images_temp">الصور</string>
+    <string name="code_temp">الباركود</string>
+    <string name="are_you_sure_you_want_to_delete_this">هل تريد ان تحذف هذا المجلد</string>
+    <string name="this_action_cannot_be_undone">لا يمكن التراجع لاحقا</string>
+    <string name="cancel">الغاء</string>
+    <string name="confirm">تأكيد</string>
+    <string name="folder">مجلد</string>
+    <string name="image_capture_failed">فشل التقاط الصورة</string>
+    <string name="folder_already_exists">المجلد موجود بالفعل</string>
+    <string name="barcode_scan_failed">فشل التقاط الباركود</string>
+    <string name="barcode_scan_cancelled">تم الغاء التقاط الباركود</string>
+    <string name="upload">رفع</string>
+    <string name="no_folders_added_yet">"لا يوجد مجلدات مضافة بعد "</string>
+    <string name="no_images_added_yet">"لا يوجد صور مضافة بعد "</string>
+    <string name="upload_all">رفع الكل</string>
+    <string name="you_need_to_login_first_to_continue">"يجب تسجيل الدخول اولا "</string>
+    <string name="some_operation_requires_login">"بعض العمليات تتطلب تسجيل الدخول اولا "</string>
+    <string name="google_login_error">خطأ الدخول بجوجل</string>
+    <string name="account_details">"تفاصيل الحساب "</string>
+    <string name="not_signed_in">"لم يسجل الدخول "</string>
+    <string name="logout">تسجيل خروج</string>
+    <string name="login">تسجيل دخول</string>
+    <string name="delete">حذف</string>
+    <string name="add">اضافة</string>
+    <string name="dismiss">تراجع</string>
+
+</resources>

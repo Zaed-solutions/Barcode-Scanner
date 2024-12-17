@@ -26,6 +26,7 @@ fun FoldersList(
     onAddImageClicked: (folderName: String) -> Unit = {},
     onDeleteImage: (folderName: String, imageUri: Uri) -> Unit = { _, _ -> },
     onDeleteFolderClicked: (folderName: String) -> Unit = {},
+    onUploadFolder: (folderName: String) -> Unit = {},
 ) {
     AnimatedContent(targetState = folders.isEmpty(), label = "folder animated content") { state ->
         when {
@@ -43,7 +44,7 @@ fun FoldersList(
                     modifier = modifier,
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
+                ) {
                     items(folders) { folder ->
                         FolderItem(
                             folder = folder,
@@ -55,6 +56,9 @@ fun FoldersList(
                             },
                             onDeleteImage = { uri ->
                                 onDeleteImage(folder.name, uri)
+                            },
+                            onUploadClicked = {
+                                onUploadFolder(folder.name)
                             }
                         )
                     }

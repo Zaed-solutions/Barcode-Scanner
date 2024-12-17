@@ -14,4 +14,18 @@
     <string name="upload">Upload</string>
     <string name="no_folders_added_yet">No folders added yet</string>
     <string name="no_images_added_yet">No images added yet</string>
+    <string name="images_uploaded">" %1$s / %2$s images uploaded"</string>
+    <string name="main_screen">Main Screen</string>
+    <string name="manage_account">Manage Account</string>
+    <string name="upload_all">Upload All</string>
+    <string name="you_need_to_login_first_to_continue">You need to login first to continue</string>
+    <string name="some_operation_requires_login">some operation requires login</string>
+    <string name="google_login_error">Google Login Error!</string>
+    <string name="account_details">Account Details</string>
+    <string name="not_signed_in">Not signed in</string>
+    <string name="logout">Logout</string>
+    <string name="login">Login</string>
+    <string name="delete">Delete</string>
+    <string name="add">Add</string>
+    <string name="dismiss">Dismiss</string>
 </resources>

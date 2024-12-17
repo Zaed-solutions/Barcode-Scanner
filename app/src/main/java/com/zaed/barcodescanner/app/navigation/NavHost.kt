@@ -9,17 +9,18 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.zaed.barcodescanner.ui.account.ManageAccountScreen
 import com.zaed.barcodescanner.ui.main.MainScreen
 
 @Composable
 fun NavigationHost(
     modifier: Modifier = Modifier,
     navController: NavHostController,
-) {
+    ) {
     NavHost(
         modifier = modifier,
         navController = navController,
-        startDestination = Route.DefaultRoute,
+        startDestination = Route.MainRoute,
         enterTransition = {
             fadeIn(
                 animationSpec = tween(
@@ -35,8 +36,22 @@ fun NavigationHost(
             )
         }
     ) {
-        composable<Route.DefaultRoute> {
-            MainScreen()
+        composable<Route.MainRoute> {
+            MainScreen(
+                navigateToLogin = {
+                    navController.navigate(Route.ManageAccountRoute)
+                }
+            )
+        }
+        composable<Route.ManageAccountRoute> {
+            ManageAccountScreen(
+                onBackPressed = {
+                    navController.popBackStack()
+                }
+            )
+
         }
     }
+
 }
+

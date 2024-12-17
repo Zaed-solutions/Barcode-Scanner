@@ -5,4 +5,12 @@ import kotlinx.serialization.Serializable
 sealed interface Route {
     @Serializable
     data object DefaultRoute : Route
+
+    @Serializable
+    data object MainRoute : Route
+
+    @Serializable
+    data object ManageAccountRoute : Route
+
+
 }

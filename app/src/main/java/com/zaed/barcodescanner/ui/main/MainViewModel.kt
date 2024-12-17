@@ -20,6 +20,21 @@ class MainViewModel(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState = _uiState.asStateFlow()
+init {
+    getCurrentAccount()
+}
+
+    private fun getCurrentAccount() {
+        viewModelScope.launch(Dispatchers.IO) {
+            googleAuth.getSignedInAccount().collect { result ->
+                result.onSuccess { account ->
+                    _uiState.update { it.copy(needToLogin = false) }
+                }.onFailure {
+                    _uiState.update { it.copy(needToLogin = true) }
+                }
+            }
+        }
+    }
 
     fun handleAction(action: MainUiAction) {
         when (action) {
@@ -41,7 +56,143 @@ class MainViewModel(
             )
 
             MainUiAction.OnUploadFolders -> uploadFolders()
+            MainUiAction.OnSignOut -> signOut()
+            is MainUiAction.OnUploadFolder -> uploadFolder(action.folderName)
             else -> Unit
+        }
+    }
+
+    private fun uploadFolder(folderName: String) {
+        val folder = uiState.value.folders.find { it.name == folderName }
+        if (folder != null) {
+            viewModelScope.launch(Dispatchers.IO) {
+                googleAuth.getSignedInAccount().collect { result ->
+                    result.onSuccess { account ->
+                        _uiState.update { it.copy(needToLogin = false) }
+                        Log.d("UPLOAD_SUCCESS", "${account.email}")
+                        val folderId = driveRemoteSource.createFolder(account, folder.name)
+                        folder.images.filter { !it.isUploaded }.forEach { image ->
+                            ///////////
+                            launch(Dispatchers.IO) {
+                                driveRemoteSource.uploadFileToSpecificFolder(
+                                    account = account,
+                                    fileUri = image.uri,
+                                    mimeType = "image/jpeg",
+                                    fileName = image.uri.toString().substringAfterLast("/"),
+                                    folderId = folderId,
+                                    folderName = folder.name
+                                ).collect { result ->
+                                    result.onSuccess { data ->
+                                        _uiState.update { oldState ->
+                                            oldState.copy(
+                                                folders = oldState.folders.map { currentFolder ->
+                                                    if (currentFolder.name == folder.name) {
+                                                        currentFolder.copy(images = currentFolder.images.map { currentImage ->
+
+                                                            if (!currentImage.isUploaded && image.uri.toString()
+                                                                    .substringAfterLast("/") == data.first
+                                                            ) {
+                                                                if (data.second != 1.0f) {
+                                                                    currentImage.copy(
+                                                                        uploadProgress = data.second,
+                                                                    )
+                                                                } else {
+                                                                    currentImage.copy(
+                                                                        uploadProgress = 1.0f,
+                                                                        isUploaded = true
+                                                                    )
+                                                                }
+                                                            } else {
+                                                                currentImage
+                                                            }
+
+                                                        })
+                                                    } else currentFolder
+                                                }
+                                            )
+                                        }
+                                        Log.d("UPLOAD_SUCCESS", "uploadFolders: $data")
+                                    }
+                                    result.onFailure {
+                                        Log.d("UPLOAD_SUCCESS", "uploadFolders: ${it.message}")
+                                    }
+                                }
+                            }
+                        }
+                    }.onFailure {
+                        Log.d("UPLOAD_SUCCESS", "uploadFolders: ${it.message}")
+                        _uiState.update { it.copy(needToLogin = true) }
+
+                    }
+                }
+            }
+        }
+    }
+
+
+    //TODO BY ZAREA
+    private fun uploadFolders() {
+        viewModelScope.launch(Dispatchers.IO) {
+            googleAuth.getSignedInAccount().collect { result ->
+                result.onSuccess { account ->
+                    _uiState.update { it.copy(needToLogin = false) }
+                    Log.d("UPLOAD_SUCCESS", "${account.email}")
+                    uiState.value.folders.forEach { folder ->
+                        val folderId = driveRemoteSource.createFolder(account, folder.name)
+                        folder.images.filter { !it.isUploaded }.forEach { image ->
+                            ///////////
+                            launch(Dispatchers.IO) {
+                                driveRemoteSource.uploadFileToSpecificFolder(
+                                    account = account,
+                                    fileUri = image.uri,
+                                    mimeType = "image/jpeg",
+                                    fileName = image.uri.toString().substringAfterLast("/"),
+                                    folderId = folderId,
+                                    folderName = folder.name
+                                ).collect { result ->
+                                    result.onSuccess { data ->
+                                        _uiState.update { oldState ->
+                                            oldState.copy(
+                                                folders = oldState.folders.map { currentFolder ->
+                                                    if (currentFolder.name == folder.name) {
+                                                        currentFolder.copy(images = currentFolder.images.map { currentImage ->
+
+                                                            if (!currentImage.isUploaded && image.uri.toString()
+                                                                    .substringAfterLast("/") == data.first
+                                                            ) {
+                                                                if (data.second != 1.0f) {
+                                                                    currentImage.copy(
+                                                                        uploadProgress = data.second,
+                                                                    )
+                                                                } else {
+                                                                    currentImage.copy(
+                                                                        uploadProgress = 1.0f,
+                                                                        isUploaded = true
+                                                                    )
+                                                                }
+                                                            } else {
+                                                                currentImage
+                                                            }
+
+                                                        })
+                                                    } else currentFolder
+                                                }
+                                            )
+                                        }
+                                        Log.d("UPLOAD_SUCCESS", "uploadFolders: $data")
+                                    }
+                                    result.onFailure {
+                                        Log.d("UPLOAD_SUCCESS", "uploadFolders: ${it.message}")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }.onFailure {
+                    _uiState.update { it.copy(needToLogin = true) }
+                    Log.d("UPLOAD_SUCCESS", "uploadFolders: ${it.message}")
+                }
+            }
         }
     }
 
@@ -60,38 +211,6 @@ class MainViewModel(
             }
         }
     }
-    //TODO BY ZAREA
-    private fun uploadFolders() {
-        viewModelScope.launch(Dispatchers.IO) {
-            googleAuth.getSignedInAccount().collect { result ->
-                result.onSuccess { account ->
-                    Log.d("UPLOAD_SUCCESS", "${account.email}")
-                    uiState.value.folders.forEach { folder ->
-                        val folderId = driveRemoteSource.createFolder(account, folder.name)
-                        folder.images.forEach { image ->
-                            driveRemoteSource.uploadFileToSpecificFolder(
-                                account = account,
-                                fileUri = image.uri,
-                                mimeType = "image/jpeg",
-                                fileName = image.uri.toString().substringAfterLast("/"),
-                                folderId = folderId
-                            ).collect{result->
-                                result.onSuccess {data->
-                                    _uiState.update { oldState ->
-                                        oldState.copy(progress = data)
-                                    }
-                                    Log.d("UPLOAD_SUCCESS", "uploadFolders: $data")
-                                }
-                                result.onFailure {
-                                    Log.d("UPLOAD_SUCCESS", "uploadFolders: ${it.message}")
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     private fun addNewProductImage(folderName: String, uri: Uri) {
         viewModelScope.launch {
@@ -104,6 +223,7 @@ class MainViewModel(
                         } else {
                             folder
                         }
+
                     }
                 )
             }
@@ -157,6 +277,10 @@ class MainViewModel(
                 }
             }
         }
+    }
+
+    fun resetNeedToLogin() {
+        _uiState.update { it.copy(needToLogin = false) }
     }
 
 //
