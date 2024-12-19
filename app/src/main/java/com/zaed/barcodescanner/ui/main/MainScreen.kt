@@ -197,10 +197,10 @@ fun MainScreenContent(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_logo),
+                            painter = painterResource(id = R.drawable.ic_launcher_foreground),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(32.dp)
+                            modifier = Modifier.size(48.dp)
                         )
                         Text(
                             text = stringResource(R.string.app_name),
