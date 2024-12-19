@@ -122,16 +122,17 @@ fun MainScreen(
                     val scanner = GmsBarcodeScanning.getClient(context, options)
                     scanner.startScan().addOnSuccessListener { barCode ->
                         Log.d("Barcode", "${barCode.rawValue}")
-                        if (!barCode.rawValue.isNullOrBlank() && state.folders.none { it.name == barCode.rawValue }) {
+                        val code = barCode.rawValue?.take(7)?:""
+                        if (code.isNotBlank() && state.folders.none { it.name == code }) {
                             viewModel.handleAction(
                                 MainUiAction.OnAddNewFolder(
-                                    barCode.rawValue ?: ""
+                                    code
                                 )
                             )
                             val result = createImageFile(context)
                             Log.d(TAG, "MainScreen: Image file created: $result")
                             photoUri = result
-                            selectedFolder = barCode.rawValue?.take(7) ?: ""
+                            selectedFolder = code
                             cameraCaptureLauncher.launch(photoUri ?: Uri.EMPTY)
                         } else {
                             scope.launch {
