@@ -128,6 +128,11 @@ fun MainScreen(
                                     barCode.rawValue ?: ""
                                 )
                             )
+                            val result = createImageFile(context)
+                            Log.d(TAG, "MainScreen: Image file created: $result")
+                            photoUri = result
+                            selectedFolder = barCode.rawValue?.take(7) ?: ""
+                            cameraCaptureLauncher.launch(photoUri ?: Uri.EMPTY)
                         } else {
                             scope.launch {
                                 snackbarHostState.showSnackbar(context.getString(R.string.folder_already_exists))

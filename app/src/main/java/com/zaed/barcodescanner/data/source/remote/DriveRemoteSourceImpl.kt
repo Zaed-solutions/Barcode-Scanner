@@ -2,8 +2,11 @@ package com.zaed.barcodescanner.data.source.remote
 
 import android.content.ContentResolver
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
+import android.webkit.MimeTypeMap
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.api.client.googleapis.extensions.android.gms.auth.GoogleAccountCredential
 import com.google.api.client.googleapis.media.MediaHttpUploader
@@ -12,28 +15,42 @@ import com.google.api.client.http.FileContent
 import com.google.api.client.http.InputStreamContent
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.DriveScopes
+import id.zelory.compressor.Compressor
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 import java.io.InputStream
+import java.io.OutputStream
 import java.util.Collections
 
 class DriveRemoteSourceImpl(
     private val context: Context
 ) : DriveRemoteSource {
-    fun createDriveService(account: GoogleSignInAccount): Drive {
-        val credential = GoogleAccountCredential.usingOAuth2(
-            context, Collections.singleton(DriveScopes.DRIVE_FILE)
-        )
-        credential.selectedAccount = account.account
-        return Drive.Builder(
-            com.google.api.client.http.javanet.NetHttpTransport(),
-            com.google.api.client.json.gson.GsonFactory(),
-            credential
-        ).setApplicationName("Barcode Scanner") // Replace with your app's name
-            .build()
+    private fun createDriveService(account: GoogleSignInAccount): Drive {
+        try {
+            val credential = GoogleAccountCredential.usingOAuth2(
+                context, Collections.singleton(DriveScopes.DRIVE_FILE)
+            )
+            credential.selectedAccount = account.account
+            return Drive.Builder(
+                com.google.api.client.http.javanet.NetHttpTransport(),
+                com.google.api.client.json.gson.GsonFactory(),
+                credential
+            ).setApplicationName("Barcode Scanner") // Replace with your app's name
+                .build()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Log.e("UPLOAD_ERROR", "Failed to create Drive service: ${e.message}", e)
+            throw e
+        }
     }
 
     override fun uploadFileToDrive(
@@ -59,6 +76,45 @@ class DriveRemoteSourceImpl(
         }
     }
 
+
+    private fun fileFromContentUri(context: Context, contentUri: Uri): File {
+
+        val fileExtension = getFileExtension(context, contentUri)
+        val fileName = "temporary_file" + if (fileExtension != null) ".$fileExtension" else ""
+
+        val tempFile = File(context.cacheDir, fileName)
+        tempFile.createNewFile()
+
+        try {
+            val oStream = FileOutputStream(tempFile)
+            val inputStream = context.contentResolver.openInputStream(contentUri)
+
+            inputStream?.let {
+                copy(inputStream, oStream)
+            }
+
+            oStream.flush()
+            oStream.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        return tempFile
+    }
+
+    private fun getFileExtension(context: Context, uri: Uri): String? {
+        val fileType: String? = context.contentResolver.getType(uri)
+        return MimeTypeMap.getSingleton().getExtensionFromMimeType(fileType)
+    }
+
+    @Throws(IOException::class)
+    private fun copy(source: InputStream, target: OutputStream) {
+        val buf = ByteArray(8192)
+        var length: Int
+        while (source.read(buf).also { length = it } > 0) {
+            target.write(buf, 0, length)
+        }
+    }
     override fun uploadFileToSpecificFolder(
         account: GoogleSignInAccount,
         fileUri: Uri,
@@ -72,12 +128,20 @@ class DriveRemoteSourceImpl(
             parents = Collections.singletonList(folderId)
         }
         val contentResolver: ContentResolver = context.contentResolver
+//        val downsizedInputStream = ImageHelper.getPathFromGooglePhotosUri(
+//            context, fileUri
+//        )?.let {
+//            File(
+//                it
+//            )
+//        }?.let {
+//            ImageHelper.getStreamByteFromImage(
+//                it
+//            ).inputStream()
+//        }
         val inputStream: InputStream? = contentResolver.openInputStream(fileUri)
-        if (inputStream == null) {
-            trySend(Result.failure(Exception("Failed to open input stream for URI: $fileUri")))
-            return@callbackFlow
-        }
         val fileSize: Long = contentResolver.openFileDescriptor(fileUri, "r")?.statSize ?: -1
+        Log.d("UPLOAD_SUCCESS", "File size: $fileSize")
         val mediaContent = InputStreamContent(mimeType, inputStream).apply {
             length =fileSize
         }
@@ -109,8 +173,6 @@ class DriveRemoteSourceImpl(
         } catch (e: Exception) {
             trySend(Result.failure(e))
             Log.e("UPLOAD_SUCCESS", "Failed to upload file: ${e.message}", e)
-        }finally {
-            inputStream?.close()
         }
         awaitClose {  }
     }

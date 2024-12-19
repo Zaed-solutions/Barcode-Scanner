@@ -39,7 +39,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -131,5 +131,7 @@ dependencies {
     //google code scanner
     implementation(libs.play.services.code.scanner)
     implementation("androidx.work:work-runtime-ktx:2.8.1")
+    implementation ("id.zelory:compressor:3.0.1")
+
 
 }

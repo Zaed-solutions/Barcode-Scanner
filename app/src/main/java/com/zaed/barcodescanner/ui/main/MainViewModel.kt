@@ -233,7 +233,8 @@ init {
     private fun addNewFolder(folderName: String) {
         viewModelScope.launch {
             val folders = uiState.value.folders.toMutableList()
-            folders.add(ProductsFolder(folderName))
+            val shortenedName = folderName.take(7) // Take the first 7 characters
+            folders.add(ProductsFolder(shortenedName))
             _uiState.update {
                 it.copy(folders = folders)
             }
