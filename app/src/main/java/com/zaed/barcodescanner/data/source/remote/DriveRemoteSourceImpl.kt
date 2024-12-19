@@ -128,17 +128,6 @@ class DriveRemoteSourceImpl(
             parents = Collections.singletonList(folderId)
         }
         val contentResolver: ContentResolver = context.contentResolver
-//        val downsizedInputStream = ImageHelper.getPathFromGooglePhotosUri(
-//            context, fileUri
-//        )?.let {
-//            File(
-//                it
-//            )
-//        }?.let {
-//            ImageHelper.getStreamByteFromImage(
-//                it
-//            ).inputStream()
-//        }
         val inputStream: InputStream? = contentResolver.openInputStream(fileUri)
         val fileSize: Long = contentResolver.openFileDescriptor(fileUri, "r")?.statSize ?: -1
         Log.d("UPLOAD_SUCCESS", "File size: $fileSize")
