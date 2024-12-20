@@ -76,6 +76,9 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.camera2)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -132,6 +135,13 @@ dependencies {
     implementation(libs.play.services.code.scanner)
     implementation("androidx.work:work-runtime-ktx:2.8.1")
     implementation ("id.zelory:compressor:3.0.1")
+
+//    implementation ("androidx.camera:camera-core:1.5.0")
+//    implementation ("androidx.camera:camera-camera2:1.5.0")
+//    implementation ("androidx.camera:camera-lifecycle:1.5.0")
+//    implementation ("androidx.camera:camera-view:1.5.0")
+//    implementation ("androidx.camera:camera-extensions:1.5.0") // For quality controls
+
 
 
 }

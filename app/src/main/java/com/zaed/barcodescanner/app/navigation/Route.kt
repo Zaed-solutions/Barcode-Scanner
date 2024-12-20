@@ -12,5 +12,8 @@ sealed interface Route {
     @Serializable
     data object ManageAccountRoute : Route
 
+    @Serializable
+    data object CameraRoute : Route
+
 
 }

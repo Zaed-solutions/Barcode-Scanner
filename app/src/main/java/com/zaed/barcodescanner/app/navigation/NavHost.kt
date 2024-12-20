@@ -40,9 +40,10 @@ fun NavigationHost(
             MainScreen(
                 navigateToLogin = {
                     navController.navigate(Route.ManageAccountRoute)
-                }
+                },
             )
         }
+
         composable<Route.ManageAccountRoute> {
             ManageAccountScreen(
                 onBackPressed = {

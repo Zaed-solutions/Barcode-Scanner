@@ -2,8 +2,6 @@ package com.zaed.barcodescanner.ui.main
 
 import android.net.Uri
 import android.util.Log
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -62,7 +60,8 @@ val TAG = "MainScreen"
 fun MainScreen(
     modifier: Modifier = Modifier,
     viewModel: MainViewModel = koinViewModel(),
-    navigateToLogin: () -> Unit = {}
+    navigateToLogin: () -> Unit = {},
+    imageQuality: Int = 20
 ) {
     LaunchedEffect(true) {
         Log.d(TAG, "MainScreen: LaunchedEffect")
@@ -77,31 +76,64 @@ fun MainScreen(
         mutableStateOf("")
     }
     var photoUri by rememberSaveable { mutableStateOf<Uri?>(null) }
-    val cameraCaptureLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
-            Log.d(TAG, "MainScreen: Image capture result: $success, $photoUri")
-            if (success && photoUri != null) {
-                Log.d(TAG, "MainScreen: Image capture successful.")
+    var isCameraBottomSheetVisible by remember {
+        mutableStateOf(false)
+    }
+    var isWrongBarcodeSheetVisible by remember {
+        mutableStateOf(false)
+    }
+    MainScreenContent(
+        modifier = modifier,
+        submitImages = {images->
+            images.forEach{image->
                 viewModel.handleAction(
                     MainUiAction.OnAddNewProductImage(
                         selectedFolder,
-                        photoUri ?: Uri.EMPTY
+                        image
                     )
                 )
-            } else {
-                scope.launch {
-                    snackbarHostState.showSnackbar(context.getString(R.string.image_capture_failed))
-                }
-                Log.d(TAG, "Image capture failed.")
             }
-        }
-    MainScreenContent(
-        modifier = modifier,
+        },
         folders = state.folders,
+        isWrongBarcodeSheetVisible = isWrongBarcodeSheetVisible,
         hostState = snackbarHostState,
+        isCameraBottomSheetVisible = isCameraBottomSheetVisible,
+        closeCameraBottomSheet = {
+            isCameraBottomSheetVisible = false
+        },
+        closeWrongBarcodeSheet = {
+            isWrongBarcodeSheetVisible = false
+        },
         needToLogin = state.needToLogin,
         navigateToLogin = navigateToLogin,
         resetNeedToLogin = { viewModel.resetNeedToLogin() },
+        onImageCaptured = { uri ->
+            photoUri = uri
+            isCameraBottomSheetVisible = false
+            viewModel.handleAction(
+                MainUiAction.OnAddNewProductImage(
+                    selectedFolder,
+                    uri
+                )
+            )
+        },
+        onImageCapturedWithAddNewImage = {
+            photoUri = it
+            viewModel.handleAction(
+                MainUiAction.OnAddNewProductImage(
+                    selectedFolder,
+                    it
+                )
+            )
+        },
+        onImageCapturedFailed = {
+            scope.launch {
+                snackbarHostState.showSnackbar(context.getString(R.string.image_capture_failed))
+            }
+            isCameraBottomSheetVisible = false
+        },
+        imageQuality = imageQuality,
+        numberOfImageCapturedForCurrentFolder = state.folders.find { it.name == selectedFolder }?.images?.size ?: 0,
         onAction = { action ->
             when (action) {
                 is MainUiAction.OnAddProductImageClicked -> {
@@ -109,34 +141,39 @@ fun MainScreen(
                     Log.d(TAG, "MainScreen: Image file created: $result")
                     photoUri = result
                     selectedFolder = action.folderName
-                    cameraCaptureLauncher.launch(photoUri ?: Uri.EMPTY)
+                    isCameraBottomSheetVisible = true
                 }
 
                 MainUiAction.OnScanBarcodeClicked -> {
                     val options = GmsBarcodeScannerOptions.Builder()
-//                        .setBarcodeFormats(
-//                            Barcode.FORMAT_QR_CODE,
-//                            Barcode.FORMAT_AZTEC)
                         .enableAutoZoom()
                         .build()
                     val scanner = GmsBarcodeScanning.getClient(context, options)
                     scanner.startScan().addOnSuccessListener { barCode ->
-                        Log.d("Barcode", "${barCode.rawValue}")
-                        val code = barCode.rawValue?.take(7)?:""
-                        if (code.isNotBlank() && state.folders.none { it.name == code }) {
-                            viewModel.handleAction(
-                                MainUiAction.OnAddNewFolder(
-                                    code
-                                )
-                            )
-                            val result = createImageFile(context)
-                            Log.d(TAG, "MainScreen: Image file created: $result")
-                            photoUri = result
-                            selectedFolder = code
-                            cameraCaptureLauncher.launch(photoUri ?: Uri.EMPTY)
-                        } else {
+                        if((barCode.rawValue?.trim()?.length ?: 0) > 7){
+                            Log.d(TAG, "MainScreen: ${barCode.rawValue} with length ${barCode.rawValue?.length}")
                             scope.launch {
-                                snackbarHostState.showSnackbar(context.getString(R.string.folder_already_exists))
+                                snackbarHostState.showSnackbar("Invalid barcode with length ${barCode.rawValue?.length}  ${barCode.rawValue}characters")
+                            }
+                            return@addOnSuccessListener
+                        }else {
+                            Log.d("Barcode", "${barCode.rawValue}")
+                            val code = barCode.rawValue?.trim() ?: ""
+                            if (code.isNotBlank() && state.folders.none { it.name == code }) {
+                                viewModel.handleAction(
+                                    MainUiAction.OnAddNewFolder(
+                                        code
+                                    )
+                                )
+                                val result = createImageFile(context)
+                                Log.d(TAG, "MainScreen: Image file created: $result")
+                                photoUri = result
+                                selectedFolder = code
+                                isCameraBottomSheetVisible = true
+                            } else {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(context.getString(R.string.folder_already_exists))
+                                }
                             }
                         }
                     }.addOnCanceledListener {
@@ -167,8 +204,18 @@ fun MainScreenContent(
     folders: List<ProductsFolder> = emptyList(),
     onAction: (MainUiAction) -> Unit = {},
     navigateToLogin: () -> Unit = {},
+    closeWrongBarcodeSheet: () -> Unit = {},
+    isCameraBottomSheetVisible: Boolean = false,
+    closeCameraBottomSheet: () -> Unit = {},
     needToLogin: Boolean = false,
-    resetNeedToLogin: () -> Unit = {}
+    isWrongBarcodeSheetVisible: Boolean = false,
+    resetNeedToLogin: () -> Unit = {},
+    onImageCaptured: (Uri) -> Unit ={},
+    onImageCapturedFailed: () -> Unit = {},
+    onImageCapturedWithAddNewImage: (Uri) -> Unit = {},
+    imageQuality: Int = 20,
+    numberOfImageCapturedForCurrentFolder: Int = 0,
+    submitImages: (List<Uri>) -> Unit = {}
 ) {
 
 
@@ -178,6 +225,7 @@ fun MainScreenContent(
     var isConfirmDeleteSheetVisible by remember {
         mutableStateOf(false)
     }
+
     var isNeedToLoginSheetVisible by remember {
         mutableStateOf(false)
     }
@@ -305,6 +353,44 @@ fun MainScreenContent(
                             isNeedToLoginSheetVisible = false
                             navigateToLogin()
                         }
+                    )
+                }
+            }
+            AnimatedVisibility(isWrongBarcodeSheetVisible) {
+                ModalBottomSheet(
+                    onDismissRequest = {
+                        closeWrongBarcodeSheet()
+                    },
+                    sheetState = rememberModalBottomSheetState()
+                ) {
+                    ConfirmNavigateToLoginDialog(
+                        onDismiss = {
+                            isNeedToLoginSheetVisible = false
+                        },
+                        onConfirm = {
+                            isNeedToLoginSheetVisible = false
+                            navigateToLogin()
+                        }
+                    )
+                }
+            }
+            AnimatedVisibility(isCameraBottomSheetVisible) {
+                ModalBottomSheet(
+                    onDismissRequest = {
+                        closeCameraBottomSheet()
+                    },
+                    sheetState = rememberModalBottomSheetState(
+                        skipPartiallyExpanded = true
+                    ),
+                    dragHandle = {}
+                ) {
+                    CameraPreviewScreen(
+                        imageQuality = imageQuality,
+                        numberOfImageCapturedForCurrentFolder =numberOfImageCapturedForCurrentFolder ,
+                        onImageCaptured = onImageCaptured,
+                        onImageCapturedFailed = onImageCapturedFailed,
+                        onImageCapturedWithAddNewImage = onImageCapturedWithAddNewImage,
+                        submitImages = submitImages
                     )
                 }
             }

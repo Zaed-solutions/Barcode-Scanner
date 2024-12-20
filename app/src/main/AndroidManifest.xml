@@ -7,7 +7,12 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
-
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-permission android:name="android.permission.CAMERA" />
+<!--    <uses-feature android:name="android.hardware.camera" />-->
+    <uses-feature android:name="android.hardware.camera.autofocus" />
     <application
         android:allowBackup="true"
         android:name=".app.MainApplication"
@@ -22,6 +27,9 @@
         <meta-data
             android:name="com.google.mlkit.vision.DEPENDENCIES"
             android:value="barcode_ui"/>
+        <meta-data
+            android:name="androidx.camera.default.impl"
+            android:value="androidx.camera.camera2.Camera2Config" />
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"
