@@ -19,7 +19,7 @@
     <string name="manage_account">Manage Account</string>
     <string name="upload_all">Upload All</string>
     <string name="you_need_to_login_first_to_continue">You need to login first to continue</string>
-    <string name="some_operation_requires_login">some operation requires login</string>
+    <string name="some_operation_requires_login">some operations requires a google account</string>
     <string name="google_login_error">Google Login Error!</string>
     <string name="account_details">Account Details</string>
     <string name="not_signed_in">Not signed in</string>
@@ -36,12 +36,14 @@
     <string name="yes">YES</string>
     <string name="enter_barcode">Enter Barcode</string>
     <string name="barcode">Barcode</string>
-    <string name="barcode_cannot_be_empty">Barcode cannot be empty</string>
-    <string name="barcode_must_be_at_least_7_characters">Barcode must be at least 7 characters</string>
+    <string name="barcode_cannot_be_empty">Folder name cannot be empty</string>
+    <string name="barcode_must_be_at_least_7_characters">Folder name cannot be longer than 7 characters</string>
     <string name="create">Create</string>
     <string name="apply_edits">Apply Edits</string>
     <string name="if_the_folder_name_is_empty_it_will_save_to_the_root">If the folder name is empty it will save to the root</string>
     <string name="folder_name">Folder Name</string>
     <string name="save_to_folder">Save to Folder</string>
     <string name="edit">Edit</string>
+    <string name="add_folder">Create Folder</string>
+    <string name="settings">Settings</string>
 </resources>

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ModalDrawerSheet
@@ -105,7 +106,6 @@ class MainActivity : ComponentActivity() {
 fun App() {
     val navController = rememberNavController()
     NavigationHost(
-        modifier = Modifier,
         navController = navController,
     )
 

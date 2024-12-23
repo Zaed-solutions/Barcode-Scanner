@@ -115,7 +115,7 @@ fun ManageAccountScreenContent(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = stringResource(R.string.manage_account),
+                        text = stringResource(R.string.settings),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -138,7 +138,7 @@ fun ManageAccountScreenContent(
                 .padding(paddingValues)
                 .fillMaxSize()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.SpaceEvenly
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // Account Info
             Card(
@@ -231,6 +231,7 @@ fun ManageAccountScreenContent(
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
+                        singleLine = true,
                         value = mainFolderName,
                         onValueChange = {
                             onMainFolderNameChanged(it)

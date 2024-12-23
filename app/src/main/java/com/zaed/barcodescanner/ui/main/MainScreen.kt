@@ -3,18 +3,20 @@ package com.zaed.barcodescanner.ui.main
 import android.net.Uri
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DocumentScanner
-import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.ManageAccounts
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
@@ -88,8 +90,8 @@ fun MainScreen(
 
     MainScreenContent(
         modifier = modifier,
-        submitImages = {images->
-            images.forEach{image->
+        submitImages = { images ->
+            images.forEach { image ->
                 viewModel.handleAction(
                     MainUiAction.OnAddNewProductImage(
                         selectedFolder,
@@ -126,7 +128,8 @@ fun MainScreen(
                     selectedFolder = action.folderName
                     isCameraBottomSheetVisible = true
                 }
-                is MainUiAction.OnEnteredBarcodeManually ->{
+
+                is MainUiAction.OnEnteredBarcodeManually -> {
                     val code = action.barcode
                     if (code.isNotBlank() && state.folders.none { it.name == code }) {
                         viewModel.handleAction(
@@ -143,18 +146,19 @@ fun MainScreen(
                         isCameraBottomSheetVisible = true
                     }
                 }
+
                 MainUiAction.OnScanBarcodeClicked -> {
                     val options = GmsBarcodeScannerOptions.Builder()
                         .enableAutoZoom()
                         .build()
                     val scanner = GmsBarcodeScanning.getClient(context, options)
                     scanner.startScan().addOnSuccessListener { barCode ->
-                        if((barCode.rawValue?.trim()?.length ?: 0) > 7){
+                        if ((barCode.rawValue?.trim()?.length ?: 0) > 7) {
                             scope.launch {
                                 snackbarHostState.showSnackbar(context.getString(R.string.invalid_barcode))
                             }
                             return@addOnSuccessListener
-                        }else {
+                        } else {
                             Log.d("Barcode", "${barCode.rawValue}")
                             val code = barCode.rawValue?.trim() ?: ""
                             if (code.isNotBlank() && state.folders.none { it.name == code }) {
@@ -187,6 +191,7 @@ fun MainScreen(
                         }
                     }
                 }
+
                 MainUiAction.OnWriteBarcodeManuallyClicked -> {
 
                 }
@@ -216,10 +221,8 @@ fun MainScreenContent(
     onImageCapturedFailed: () -> Unit = {},
     imageQuality: Int = 20,
     submitImages: (List<Uri>) -> Unit = {},
-    resetThereIsFoldersNotUploadedYet: () -> Unit = {} ,
+    resetThereIsFoldersNotUploadedYet: () -> Unit = {},
 ) {
-
-
     var selectedFolderName by remember {
         mutableStateOf("")
     }
@@ -236,14 +239,17 @@ fun MainScreenContent(
     var isEnterBarCodeManuallySheetVisible by remember {
         mutableStateOf(false)
     }
+    var isOptionsMenuVisible by remember {
+        mutableStateOf(false)
+    }
     LaunchedEffect(key1 = needToLogin) {
         if (needToLogin) {
             isNeedToLoginSheetVisible = true
             resetNeedToLogin()
         }
     }
-    LaunchedEffect(thereIsFoldersNotUploadedYet){
-        if(thereIsFoldersNotUploadedYet){
+    LaunchedEffect(thereIsFoldersNotUploadedYet) {
+        if (thereIsFoldersNotUploadedYet) {
             isThereIsFoldersNotUploadedYetSheetVisible = true
             resetThereIsFoldersNotUploadedYet()
         }
@@ -265,66 +271,89 @@ fun MainScreenContent(
                         )
                         Text(
                             text = stringResource(R.string.app_name),
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.titleLarge,
                             modifier = Modifier.padding(start = 8.dp)
                         )
                     }
                 },
                 actions = {
-                    TextButton(
-                        onClick = {
-                            onAction(MainUiAction.OnDeleteAllFoldersClicked)
+                    Box(
+                        modifier = Modifier
+                            .wrapContentSize(Alignment.TopEnd)
+                    ) {
+                        IconButton(
+                            onClick = { isOptionsMenuVisible = !isOptionsMenuVisible },
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = null,
+                            )
                         }
-                    ) {
-                        Text(
-                            text = stringResource(R.string.delete_all),
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                    TextButton(
-                        onClick = {
-                            onAction(MainUiAction.OnUploadFolders)
+                        DropdownMenu(
+                            expanded = isOptionsMenuVisible,
+                            onDismissRequest = { isOptionsMenuVisible = false }
+                        ) {
+                            DropdownMenuItem(
+                                onClick = {
+                                    isOptionsMenuVisible = false
+                                    isEnterBarCodeManuallySheetVisible = true
+                                },
+                                text = {
+                                    Text(
+                                        text = stringResource(R.string.add_folder),
+                                    )
+                                },
+                            )
+                            DropdownMenuItem(
+                                onClick = {
+                                    onAction(MainUiAction.OnUploadFolders)
+                                    isOptionsMenuVisible = false
+                                },
+                                text = {
+                                    Text(
+                                        text = stringResource(R.string.upload_all),
+                                    )
+                                },
+                            )
+                            DropdownMenuItem(
+                                onClick = {
+                                    onAction(MainUiAction.OnDeleteAllFoldersClicked)
+                                    isOptionsMenuVisible = false
+                                },
+                                text = {
+                                    Text(
+                                        text = stringResource(R.string.delete_all),
+                                    )
+                                },
+                            )
+                            DropdownMenuItem(
+                                onClick = {
+                                    navigateToLogin()
+                                    isOptionsMenuVisible = false
+                                },
+                                text = {
+                                    Text(
+                                        text = stringResource(R.string.settings),
+                                    )
+                                },
+                            )
                         }
-                    ) {
-                        Text(stringResource(R.string.upload_all))
                     }
-                    IconButton(
-                        onClick = navigateToLogin
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ManageAccounts,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
                 }
             )
         },
         floatingActionButton = {
-            Row {
-                FloatingActionButton(
-                    onClick = {
-                        onAction(MainUiAction.OnScanBarcodeClicked)
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.DocumentScanner,
-                        contentDescription = null
-                    )
+            FloatingActionButton(
+                onClick = {
+                    onAction(MainUiAction.OnScanBarcodeClicked)
                 }
-                Spacer(modifier = Modifier.width(32.dp))
-                FloatingActionButton(
-                    onClick = {
-                        isEnterBarCodeManuallySheetVisible = true
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.EditNote,
-                        contentDescription = null
-                    )
-                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.DocumentScanner,
+                    contentDescription = null
+                )
             }
+
         },
         floatingActionButtonPosition = FabPosition.Center
     ) { innerPadding ->
@@ -403,7 +432,7 @@ fun MainScreenContent(
                         onDismiss = {
                             isEnterBarCodeManuallySheetVisible = false
                         },
-                        onConfirm = {barcode->
+                        onConfirm = { barcode ->
                             isEnterBarCodeManuallySheetVisible = false
                             onAction(MainUiAction.OnEnteredBarcodeManually(barcode))
                         }

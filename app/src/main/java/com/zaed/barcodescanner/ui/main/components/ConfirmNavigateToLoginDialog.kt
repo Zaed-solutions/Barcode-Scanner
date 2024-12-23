@@ -18,9 +18,8 @@ import androidx.compose.ui.unit.dp
 import com.zaed.barcodescanner.R
 
 @Composable
-fun ConfirmDeleteDialog(
+fun ConfirmNavigateToLoginDialog(
     modifier: Modifier = Modifier,
-    label: String,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
 ) {
@@ -31,11 +30,11 @@ fun ConfirmDeleteDialog(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
-            text = stringResource(R.string.are_you_sure_you_want_to_delete_this, label),
+            text = stringResource(R.string.you_need_to_login_first_to_continue),
             style = MaterialTheme.typography.titleLarge,
         )
         Text(
-            text = stringResource(R.string.this_action_cannot_be_undone),
+            text = stringResource(R.string.some_operation_requires_login),
             style = MaterialTheme.typography.bodyMedium,
         )
         Row(
@@ -47,18 +46,18 @@ fun ConfirmDeleteDialog(
                     .widthIn(min = 100.dp)
                     .padding(end = 8.dp)
                     .weight(1f),
-                onClick = { onDismiss() }
+                onClick = { onDismiss() },
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
             ) {
-                Text(text = stringResource(id = R.string.cancel))
+                Text(text = stringResource(R.string.dismiss))
             }
             Button(
                 modifier = Modifier
                     .widthIn(min = 100.dp)
                     .weight(1f),
-                onClick = { onConfirm() },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                onClick = { onConfirm() }
             ) {
-                Text(text = stringResource(R.string.confirm))
+                Text(text = stringResource(R.string.login))
             }
         }
     }

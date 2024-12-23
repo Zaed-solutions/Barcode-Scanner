@@ -18,9 +18,8 @@ import androidx.compose.ui.unit.dp
 import com.zaed.barcodescanner.R
 
 @Composable
-fun ConfirmDeleteDialog(
+fun ConfirmDeleteAllFoldersDialog(
     modifier: Modifier = Modifier,
-    label: String,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
 ) {
@@ -31,11 +30,11 @@ fun ConfirmDeleteDialog(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
-            text = stringResource(R.string.are_you_sure_you_want_to_delete_this, label),
+            text = stringResource(R.string.there_are_folders_that_have_not_been_uploaded_yet),
             style = MaterialTheme.typography.titleLarge,
         )
         Text(
-            text = stringResource(R.string.this_action_cannot_be_undone),
+            text = stringResource(R.string.are_you_sure_you_want_to_delete_all_folders),
             style = MaterialTheme.typography.bodyMedium,
         )
         Row(
@@ -49,7 +48,7 @@ fun ConfirmDeleteDialog(
                     .weight(1f),
                 onClick = { onDismiss() }
             ) {
-                Text(text = stringResource(id = R.string.cancel))
+                Text(text = stringResource(R.string.no))
             }
             Button(
                 modifier = Modifier
@@ -58,7 +57,7 @@ fun ConfirmDeleteDialog(
                 onClick = { onConfirm() },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
             ) {
-                Text(text = stringResource(R.string.confirm))
+                Text(text = stringResource(R.string.yes))
             }
         }
     }
