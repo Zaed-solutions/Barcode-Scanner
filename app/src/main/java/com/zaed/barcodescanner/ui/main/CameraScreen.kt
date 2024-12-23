@@ -61,10 +61,8 @@ import kotlin.coroutines.resume
 @Composable
 fun CameraPreviewScreen(
     imageQuality: Int = 20,
-    numberOfImageCapturedForCurrentFolder: Int = 0,
-    onImageCaptured: (Uri) -> Unit = {},
-    onImageCapturedWithAddNewImage: (Uri) -> Unit = {},
     onImageCapturedFailed: () -> Unit = {},
+    onDismiss:() ->Unit = {},
     submitImages: (List<Uri>) -> Unit = {}
 ) {
     var uris = remember { mutableListOf<Uri>() }
@@ -117,7 +115,7 @@ fun CameraPreviewScreen(
         ) {
             IconButton(
                 {
-                    onImageCapturedFailed()
+                    onDismiss()
 
                 }, modifier = Modifier
                     .align(Alignment.CenterStart)
@@ -136,16 +134,8 @@ fun CameraPreviewScreen(
                     .padding(end = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Log.d("teno", "CameraPreviewScreen: ${uris.size}")
-                AnimatedVisibility(uris.isNotEmpty()) {
-                    Badge() {
-                        Text(
-                            text = "$uriCount",
-                            color = Color.White,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                AnimatedVisibility(uriCount>0) {
+
                     Surface(
                         modifier = Modifier.size(64.dp),
                         shape = MaterialTheme.shapes.medium,
@@ -172,11 +162,21 @@ fun CameraPreviewScreen(
 
                         }
                     }
+                    Badge() {
+                        Text(
+                            text = "$uriCount",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
                 IconButton(
-                    enabled = uris.isNotEmpty(),
+                    enabled = uriCount>0,
                     onClick = {
+                        Log.d("teno", "sumbit: ${uris.size}")
                         submitImages(uris)
+                        onDismiss()
                     },
 
                     ) {
@@ -196,8 +196,12 @@ fun CameraPreviewScreen(
                         imageCapture = imageCapture,
                         context = context,
                         onImageCaptured = {
+                            Log.d("teno", "CameraPreviewScreen: ${uris.size}")
+
                             uris.add(it)
                             uriCount++
+                            Log.d("teno", "CameraPreviewScreen: ${uris.size}")
+
                         },
                         onImageCapturedFailed = onImageCapturedFailed
                     )
@@ -218,85 +222,13 @@ fun CameraPreviewScreen(
 
 
         }
-//            Column(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .align(Alignment.BottomCenter)
-//                    .background(
-//                        Color.White.copy(alpha = 0.8f),
-//                        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
-//                    )
-//                    .padding(16.dp),
-//                horizontalAlignment = Alignment.CenterHorizontally,
-//                verticalArrangement = Arrangement.spacedBy(12.dp)
-//            ) {
-//                Text(
-//                    text = "Image Captured ($numberOfImageCapturedForCurrentFolder)",
-//                    fontWeight = FontWeight.Bold,
-//                    fontSize = 18.sp,
-//                    color = Color(0xFF333333)
-//                )
-//
-//                Row(
-//                    horizontalArrangement = Arrangement.SpaceEvenly,
-//                    modifier = Modifier.fillMaxWidth()
-//                ) {
-//
-//                    CameraActionButton(
-//                        modifier = Modifier.weight(1f).padding(4.dp),
-//                        text = "Capture one",
-//                        color = Color.Blue.copy(alpha = 0.8f),
-//                        onClick = {
-//                            captureImage(
-//                                imageCapture = imageCapture,
-//                                context = context,
-//                                onImageCaptured = onImageCaptured,
-//                                onImageCapturedFailed = onImageCapturedFailed
-//                            )
-//                        }
-//                    )
-//                    CameraActionButton(
-//                        modifier = Modifier.weight(1f).padding(4.dp),
-//                        text = "Capture Many",
-//                        color = Color.Green.copy(alpha = 0.8f),
-//                        onClick = {
-//                            captureImage(
-//                                imageCapture = imageCapture,
-//                                context = context,
-//                                onImageCaptured = onImageCapturedWithAddNewImage,
-//                                onImageCapturedFailed = onImageCapturedFailed
-//                            )
-//                        }
-//                    )
-//                }
-//            }
+
     }
     // Bottom button bar
 
 
 }
 
-@Composable
-fun CameraActionButton(
-    modifier: Modifier = Modifier,
-    text: String,
-    color: Color,
-    onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick,
-        colors = ButtonDefaults.buttonColors(containerColor = color),
-        shape = RoundedCornerShape(12.dp),
-        modifier = modifier
-    ) {
-        Text(
-            text = text,
-            fontSize = 12.sp,
-            color = Color.White,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
 
 private fun captureImage(
     imageCapture: ImageCapture,
@@ -304,10 +236,10 @@ private fun captureImage(
     onImageCaptured: (Uri) -> Unit,
     onImageCapturedFailed: () -> Unit
 ) {
-    val name = "CameraxImage_${System.currentTimeMillis()}.jpeg"
+    val name = "CameraxImage_${System.currentTimeMillis()}.jpg"
     val contentValues = ContentValues().apply {
         put(MediaStore.MediaColumns.DISPLAY_NAME, name)
-        put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+        put(MediaStore.MediaColumns.MIME_TYPE, "image/jpg")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/CameraX-Images")
         }

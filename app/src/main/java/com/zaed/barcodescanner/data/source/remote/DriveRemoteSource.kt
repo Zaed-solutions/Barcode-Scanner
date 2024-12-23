@@ -1,9 +1,7 @@
 package com.zaed.barcodescanner.data.source.remote
 
-import android.content.Context
 import android.net.Uri
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.api.services.drive.Drive
 import kotlinx.coroutines.flow.Flow
 
 interface DriveRemoteSource {
@@ -17,7 +15,7 @@ interface DriveRemoteSource {
         account: GoogleSignInAccount,
     )
 
-    fun createFolder(account: GoogleSignInAccount, folderName: String):String
+    fun createFolder(account: GoogleSignInAccount, folderName: String, mainFolderName: String):String
     fun uploadFileToFolder(
         account: GoogleSignInAccount,
         folderId: String,

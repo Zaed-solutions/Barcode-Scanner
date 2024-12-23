@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.realm)
+    id("com.google.gms.google-services")
 //    alias(libs.plugins.firebase)
 }
 
@@ -135,6 +136,9 @@ dependencies {
     implementation(libs.play.services.code.scanner)
     implementation("androidx.work:work-runtime-ktx:2.8.1")
     implementation ("id.zelory:compressor:3.0.1")
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+    implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation ("androidx.datastore:datastore-preferences:1.1.1")
 
 //    implementation ("androidx.camera:camera-core:1.5.0")
 //    implementation ("androidx.camera:camera-camera2:1.5.0")

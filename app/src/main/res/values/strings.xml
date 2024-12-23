@@ -28,4 +28,20 @@
     <string name="delete">Delete</string>
     <string name="add">Add</string>
     <string name="dismiss">Dismiss</string>
+    <string name="invalid_barcode">Invalid barcode</string>
+    <string name="delete_all">Delete All</string>
+    <string name="there_are_folders_that_have_not_been_uploaded_yet">There are folders that have not been uploaded yet</string>
+    <string name="are_you_sure_you_want_to_delete_all_folders">Are you sure you want to delete all folders?</string>
+    <string name="no">NO</string>
+    <string name="yes">YES</string>
+    <string name="enter_barcode">Enter Barcode</string>
+    <string name="barcode">Barcode</string>
+    <string name="barcode_cannot_be_empty">Barcode cannot be empty</string>
+    <string name="barcode_must_be_at_least_7_characters">Barcode must be at least 7 characters</string>
+    <string name="create">Create</string>
+    <string name="apply_edits">Apply Edits</string>
+    <string name="if_the_folder_name_is_empty_it_will_save_to_the_root">If the folder name is empty it will save to the root</string>
+    <string name="folder_name">Folder Name</string>
+    <string name="save_to_folder">Save to Folder</string>
+    <string name="edit">Edit</string>
 </resources>

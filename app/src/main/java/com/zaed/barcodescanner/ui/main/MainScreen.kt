@@ -5,12 +5,15 @@ import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DocumentScanner
+import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
@@ -32,7 +35,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,8 +48,10 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 import com.zaed.barcodescanner.R
 import com.zaed.barcodescanner.data.models.ProductsFolder
+import com.zaed.barcodescanner.ui.main.components.ConfirmDeleteAllFoldersDialog
 import com.zaed.barcodescanner.ui.main.components.ConfirmDeleteDialog
 import com.zaed.barcodescanner.ui.main.components.ConfirmNavigateToLoginDialog
+import com.zaed.barcodescanner.ui.main.components.EnterBarCodeDialog
 import com.zaed.barcodescanner.ui.main.components.FoldersList
 import com.zaed.barcodescanner.ui.util.createImageFile
 import kotlinx.coroutines.launch
@@ -75,13 +79,13 @@ fun MainScreen(
     var selectedFolder by remember {
         mutableStateOf("")
     }
-    var photoUri by rememberSaveable { mutableStateOf<Uri?>(null) }
     var isCameraBottomSheetVisible by remember {
         mutableStateOf(false)
     }
     var isWrongBarcodeSheetVisible by remember {
         mutableStateOf(false)
     }
+
     MainScreenContent(
         modifier = modifier,
         submitImages = {images->
@@ -95,6 +99,7 @@ fun MainScreen(
             }
         },
         folders = state.folders,
+        thereIsFoldersNotUploadedYet = state.thereIsFoldersNotUploadedYet,
         isWrongBarcodeSheetVisible = isWrongBarcodeSheetVisible,
         hostState = snackbarHostState,
         isCameraBottomSheetVisible = isCameraBottomSheetVisible,
@@ -107,25 +112,7 @@ fun MainScreen(
         needToLogin = state.needToLogin,
         navigateToLogin = navigateToLogin,
         resetNeedToLogin = { viewModel.resetNeedToLogin() },
-        onImageCaptured = { uri ->
-            photoUri = uri
-            isCameraBottomSheetVisible = false
-            viewModel.handleAction(
-                MainUiAction.OnAddNewProductImage(
-                    selectedFolder,
-                    uri
-                )
-            )
-        },
-        onImageCapturedWithAddNewImage = {
-            photoUri = it
-            viewModel.handleAction(
-                MainUiAction.OnAddNewProductImage(
-                    selectedFolder,
-                    it
-                )
-            )
-        },
+        resetThereIsFoldersNotUploadedYet = { viewModel.resetThereIsFoldersNotUploadedYet() },
         onImageCapturedFailed = {
             scope.launch {
                 snackbarHostState.showSnackbar(context.getString(R.string.image_capture_failed))
@@ -133,17 +120,29 @@ fun MainScreen(
             isCameraBottomSheetVisible = false
         },
         imageQuality = imageQuality,
-        numberOfImageCapturedForCurrentFolder = state.folders.find { it.name == selectedFolder }?.images?.size ?: 0,
         onAction = { action ->
             when (action) {
                 is MainUiAction.OnAddProductImageClicked -> {
-                    val result = createImageFile(context)
-                    Log.d(TAG, "MainScreen: Image file created: $result")
-                    photoUri = result
                     selectedFolder = action.folderName
                     isCameraBottomSheetVisible = true
                 }
-
+                is MainUiAction.OnEnteredBarcodeManually ->{
+                    val code = action.barcode
+                    if (code.isNotBlank() && state.folders.none { it.name == code }) {
+                        viewModel.handleAction(
+                            MainUiAction.OnAddNewFolder(
+                                code
+                            )
+                        )
+                        val result = createImageFile(context)
+                        Log.d(TAG, "MainScreen: Image file created: $result")
+                        selectedFolder = code
+                        isCameraBottomSheetVisible = true
+                    } else {
+                        selectedFolder = code
+                        isCameraBottomSheetVisible = true
+                    }
+                }
                 MainUiAction.OnScanBarcodeClicked -> {
                     val options = GmsBarcodeScannerOptions.Builder()
                         .enableAutoZoom()
@@ -151,9 +150,8 @@ fun MainScreen(
                     val scanner = GmsBarcodeScanning.getClient(context, options)
                     scanner.startScan().addOnSuccessListener { barCode ->
                         if((barCode.rawValue?.trim()?.length ?: 0) > 7){
-                            Log.d(TAG, "MainScreen: ${barCode.rawValue} with length ${barCode.rawValue?.length}")
                             scope.launch {
-                                snackbarHostState.showSnackbar("Invalid barcode with length ${barCode.rawValue?.length}  ${barCode.rawValue}characters")
+                                snackbarHostState.showSnackbar(context.getString(R.string.invalid_barcode))
                             }
                             return@addOnSuccessListener
                         }else {
@@ -167,13 +165,14 @@ fun MainScreen(
                                 )
                                 val result = createImageFile(context)
                                 Log.d(TAG, "MainScreen: Image file created: $result")
-                                photoUri = result
                                 selectedFolder = code
                                 isCameraBottomSheetVisible = true
                             } else {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(context.getString(R.string.folder_already_exists))
-                                }
+//                                scope.launch {
+//                                    snackbarHostState.showSnackbar(context.getString(R.string.folder_already_exists))
+//                                }
+                                selectedFolder = code
+                                isCameraBottomSheetVisible = true
                             }
                         }
                     }.addOnCanceledListener {
@@ -187,6 +186,9 @@ fun MainScreen(
                             snackbarHostState.showSnackbar(context.getString(R.string.barcode_scan_failed))
                         }
                     }
+                }
+                MainUiAction.OnWriteBarcodeManuallyClicked -> {
+
                 }
 
                 else -> viewModel.handleAction(action)
@@ -202,6 +204,7 @@ fun MainScreenContent(
     modifier: Modifier = Modifier,
     hostState: SnackbarHostState = SnackbarHostState(),
     folders: List<ProductsFolder> = emptyList(),
+    thereIsFoldersNotUploadedYet: Boolean = false,
     onAction: (MainUiAction) -> Unit = {},
     navigateToLogin: () -> Unit = {},
     closeWrongBarcodeSheet: () -> Unit = {},
@@ -210,12 +213,10 @@ fun MainScreenContent(
     needToLogin: Boolean = false,
     isWrongBarcodeSheetVisible: Boolean = false,
     resetNeedToLogin: () -> Unit = {},
-    onImageCaptured: (Uri) -> Unit ={},
     onImageCapturedFailed: () -> Unit = {},
-    onImageCapturedWithAddNewImage: (Uri) -> Unit = {},
     imageQuality: Int = 20,
-    numberOfImageCapturedForCurrentFolder: Int = 0,
-    submitImages: (List<Uri>) -> Unit = {}
+    submitImages: (List<Uri>) -> Unit = {},
+    resetThereIsFoldersNotUploadedYet: () -> Unit = {} ,
 ) {
 
 
@@ -229,10 +230,22 @@ fun MainScreenContent(
     var isNeedToLoginSheetVisible by remember {
         mutableStateOf(false)
     }
+    var isThereIsFoldersNotUploadedYetSheetVisible by remember {
+        mutableStateOf(false)
+    }
+    var isEnterBarCodeManuallySheetVisible by remember {
+        mutableStateOf(false)
+    }
     LaunchedEffect(key1 = needToLogin) {
         if (needToLogin) {
             isNeedToLoginSheetVisible = true
             resetNeedToLogin()
+        }
+    }
+    LaunchedEffect(thereIsFoldersNotUploadedYet){
+        if(thereIsFoldersNotUploadedYet){
+            isThereIsFoldersNotUploadedYetSheetVisible = true
+            resetThereIsFoldersNotUploadedYet()
         }
     }
     Scaffold(
@@ -252,12 +265,22 @@ fun MainScreenContent(
                         )
                         Text(
                             text = stringResource(R.string.app_name),
-                            style = MaterialTheme.typography.titleLarge,
+                            style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.padding(start = 8.dp)
                         )
                     }
                 },
                 actions = {
+                    TextButton(
+                        onClick = {
+                            onAction(MainUiAction.OnDeleteAllFoldersClicked)
+                        }
+                    ) {
+                        Text(
+                            text = stringResource(R.string.delete_all),
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
                     TextButton(
                         onClick = {
                             onAction(MainUiAction.OnUploadFolders)
@@ -279,15 +302,28 @@ fun MainScreenContent(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    onAction(MainUiAction.OnScanBarcodeClicked)
+            Row {
+                FloatingActionButton(
+                    onClick = {
+                        onAction(MainUiAction.OnScanBarcodeClicked)
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.DocumentScanner,
+                        contentDescription = null
+                    )
                 }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.DocumentScanner,
-                    contentDescription = null
-                )
+                Spacer(modifier = Modifier.width(32.dp))
+                FloatingActionButton(
+                    onClick = {
+                        isEnterBarCodeManuallySheetVisible = true
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.EditNote,
+                        contentDescription = null
+                    )
+                }
             }
         },
         floatingActionButtonPosition = FabPosition.Center
@@ -356,6 +392,42 @@ fun MainScreenContent(
                     )
                 }
             }
+            AnimatedVisibility(isEnterBarCodeManuallySheetVisible) {
+                ModalBottomSheet(
+                    onDismissRequest = {
+                        isEnterBarCodeManuallySheetVisible = false
+                    },
+                    sheetState = rememberModalBottomSheetState()
+                ) {
+                    EnterBarCodeDialog(
+                        onDismiss = {
+                            isEnterBarCodeManuallySheetVisible = false
+                        },
+                        onConfirm = {barcode->
+                            isEnterBarCodeManuallySheetVisible = false
+                            onAction(MainUiAction.OnEnteredBarcodeManually(barcode))
+                        }
+                    )
+                }
+            }
+            AnimatedVisibility(isThereIsFoldersNotUploadedYetSheetVisible) {
+                ModalBottomSheet(
+                    onDismissRequest = {
+                        isThereIsFoldersNotUploadedYetSheetVisible = false
+                    },
+                    sheetState = rememberModalBottomSheetState()
+                ) {
+                    ConfirmDeleteAllFoldersDialog(
+                        onDismiss = {
+                            isThereIsFoldersNotUploadedYetSheetVisible = false
+                        },
+                        onConfirm = {
+                            isThereIsFoldersNotUploadedYetSheetVisible = false
+                            onAction(MainUiAction.OnDeleteAllFolders)
+                        }
+                    )
+                }
+            }
             AnimatedVisibility(isWrongBarcodeSheetVisible) {
                 ModalBottomSheet(
                     onDismissRequest = {
@@ -386,11 +458,11 @@ fun MainScreenContent(
                 ) {
                     CameraPreviewScreen(
                         imageQuality = imageQuality,
-                        numberOfImageCapturedForCurrentFolder =numberOfImageCapturedForCurrentFolder ,
-                        onImageCaptured = onImageCaptured,
                         onImageCapturedFailed = onImageCapturedFailed,
-                        onImageCapturedWithAddNewImage = onImageCapturedWithAddNewImage,
-                        submitImages = submitImages
+                        submitImages = submitImages,
+                        onDismiss = {
+                            closeCameraBottomSheet()
+                        },
                     )
                 }
             }

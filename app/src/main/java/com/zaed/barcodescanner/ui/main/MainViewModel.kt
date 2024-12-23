@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zaed.barcodescanner.data.models.ProductImage
 import com.zaed.barcodescanner.data.models.ProductsFolder
+import com.zaed.barcodescanner.data.source.local.FolderDataStore
 import com.zaed.barcodescanner.data.source.remote.DriveRemoteSource
 import com.zaed.barcodescanner.data.source.remote.GoogleAuth
 import kotlinx.coroutines.Dispatchers
@@ -16,13 +17,25 @@ import kotlinx.coroutines.launch
 
 class MainViewModel(
     private val driveRemoteSource: DriveRemoteSource,
-    private val googleAuth: GoogleAuth
+    private val googleAuth: GoogleAuth,
+    private val folderDataStore: FolderDataStore
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState = _uiState.asStateFlow()
 init {
     getCurrentAccount()
+    getMainFolderName()
 }
+
+    private fun getMainFolderName() {
+        viewModelScope.launch {
+            folderDataStore.getFolderName().collect { folderName ->
+                _uiState.update {
+                    it.copy(mainFolderName = folderName)
+                }
+            }
+        }
+    }
 
     private fun getCurrentAccount() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -54,11 +67,47 @@ init {
                 action.folderName,
                 action.imageUri
             )
+            MainUiAction.OnDeleteAllFoldersClicked -> onDeleteAllFoldersClicked()
+            MainUiAction.OnDeleteAllFolders -> deleteAllFolders()
 
             MainUiAction.OnUploadFolders -> uploadFolders()
             MainUiAction.OnSignOut -> signOut()
             is MainUiAction.OnUploadFolder -> uploadFolder(action.folderName)
             else -> Unit
+        }
+    }
+
+    private fun deleteAllFolders() {
+        viewModelScope.launch(Dispatchers.IO){
+            _uiState.update {
+                it.copy(
+                    folders = emptyList()
+                )
+            }
+        }
+    }
+
+    private fun onDeleteAllFoldersClicked() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val folders = uiState.value.folders
+            val hasUnUploadedFolders = folders.any { folder ->
+                folder.images.isNotEmpty() && folder.images.any { !it.isUploaded }
+            }
+
+            if (hasUnUploadedFolders) {
+                _uiState.update {
+                    it.copy(thereIsFoldersNotUploadedYet = true)
+                }
+            } else {
+                deleteAllFolders()
+            }
+        }
+    }
+    fun resetThereIsFoldersNotUploadedYet(){
+        _uiState.update {
+            it.copy(
+                thereIsFoldersNotUploadedYet = false
+            )
         }
     }
 
@@ -70,14 +119,14 @@ init {
                     result.onSuccess { account ->
                         _uiState.update { it.copy(needToLogin = false) }
                         Log.d("UPLOAD_SUCCESS", "${account.email}")
-                        val folderId = driveRemoteSource.createFolder(account, folder.name)
+                        val folderId = driveRemoteSource.createFolder(account, folder.name, uiState.value.mainFolderName)
                         folder.images.filter { !it.isUploaded }.forEach { image ->
                             ///////////
                             launch(Dispatchers.IO) {
                                 driveRemoteSource.uploadFileToSpecificFolder(
                                     account = account,
                                     fileUri = image.uri,
-                                    mimeType = "image/jpeg",
+                                    mimeType = "image/jpg",
                                     fileName = image.uri.toString().substringAfterLast("/"),
                                     folderId = folderId,
                                     folderName = folder.name
@@ -130,7 +179,6 @@ init {
     }
 
 
-    //TODO BY ZAREA
     private fun uploadFolders() {
         viewModelScope.launch(Dispatchers.IO) {
             googleAuth.getSignedInAccount().collect { result ->
@@ -138,14 +186,18 @@ init {
                     _uiState.update { it.copy(needToLogin = false) }
                     Log.d("UPLOAD_SUCCESS", "${account.email}")
                     uiState.value.folders.forEach { folder ->
-                        val folderId = driveRemoteSource.createFolder(account, folder.name)
+                        val folderId = driveRemoteSource.createFolder(
+                            account,
+                            folder.name,
+                            uiState.value.mainFolderName
+                        )
                         folder.images.filter { !it.isUploaded }.forEach { image ->
                             ///////////
                             launch(Dispatchers.IO) {
                                 driveRemoteSource.uploadFileToSpecificFolder(
                                     account = account,
                                     fileUri = image.uri,
-                                    mimeType = "image/jpeg",
+                                    mimeType = "image/jpg",
                                     fileName = image.uri.toString().substringAfterLast("/"),
                                     folderId = folderId,
                                     folderName = folder.name
@@ -179,6 +231,11 @@ init {
                                                 }
                                             )
                                         }
+                                        if (uiState.value.folders.all { folder -> folder.images.all { it.isUploaded } }) {
+                                                _uiState.update { oldState ->
+                                                    oldState.copy(folders = emptyList())
+                                                }
+                                        }
                                         Log.d("UPLOAD_SUCCESS", "uploadFolders: $data")
                                     }
                                     result.onFailure {
@@ -188,6 +245,7 @@ init {
                             }
                         }
                     }
+
                 }.onFailure {
                     _uiState.update { it.copy(needToLogin = true) }
                     Log.d("UPLOAD_SUCCESS", "uploadFolders: ${it.message}")
@@ -273,7 +331,11 @@ init {
             googleAuth.getSignedInAccount().collect {
                 it.onSuccess { account ->
                     Log.d("UPLOAD_SUCCESS", "${account.email} ")
-                    driveRemoteSource.createFolder(account, folderName)
+                    driveRemoteSource.createFolder(
+                        account,
+                        folderName,
+                        uiState.value.mainFolderName
+                    )
                 }
             }
         }

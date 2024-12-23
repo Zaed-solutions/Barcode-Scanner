@@ -6,6 +6,8 @@ import com.zaed.barcodescanner.data.source.remote.GoogleAuth
 import com.zaed.barcodescanner.data.source.remote.GoogleAuthImpl
 import com.zaed.barcodescanner.ui.account.ManageAccountViewModel
 import com.zaed.barcodescanner.ui.main.MainViewModel
+import com.zaed.barcodescanner.data.source.local.FolderDataStore
+import com.zaed.barcodescanner.data.source.local.FolderDataStoreImpl
 import org.koin.androidx.viewmodel.dsl.viewModelOf
 import org.koin.core.module.dsl.bind
 import org.koin.core.module.dsl.singleOf
@@ -18,5 +20,7 @@ val appModule = module {
     //Remote Source
     singleOf(::DriveRemoteSourceImpl){ bind<DriveRemoteSource>()}
     singleOf(::GoogleAuthImpl){ bind<GoogleAuth>()}
+    singleOf(::FolderDataStoreImpl) { bind<FolderDataStore>() }
+
 }
 

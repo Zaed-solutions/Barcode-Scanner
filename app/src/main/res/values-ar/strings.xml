@@ -29,5 +29,21 @@
     <string name="delete">حذف</string>
     <string name="add">اضافة</string>
     <string name="dismiss">تراجع</string>
+    <string name="invalid_barcode">"باركود غير صالح "</string>
+    <string name="delete_all">حذف الكل</string>
+    <string name="there_are_folders_that_have_not_been_uploaded_yet">هناك مجلدات لم يكتمل رفعها بعد</string>
+    <string name="are_you_sure_you_want_to_delete_all_folders">حذف جميع المجلدات على اي حال؟</string>
+    <string name="no">لا</string>
+    <string name="yes">نعم</string>
+    <string name="enter_barcode">ادخل الباركود</string>
+    <string name="barcode">باركود</string>
+    <string name="barcode_cannot_be_empty">الباركود لايمكن ان يكون فارغ</string>
+    <string name="barcode_must_be_at_least_7_characters">الباركود يجب الا يقل عن   7 خانات</string>
+    <string name="create">انشاء</string>
+    <string name="apply_edits">طبق التعديل</string>
+    <string name="if_the_folder_name_is_empty_it_will_save_to_the_root">اذا كان اسم المجلد فارغ فهذا يعني انه يحفظ بالجذر</string>
+    <string name="folder_name">اسم المجلد</string>
+    <string name="save_to_folder">احفظ في المجلد</string>
+    <string name="edit">تعديل</string>
 
 </resources>

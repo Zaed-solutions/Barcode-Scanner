@@ -2,8 +2,6 @@ package com.zaed.barcodescanner.data.source.remote
 
 import android.content.ContentResolver
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Log
 import android.webkit.MimeTypeMap
@@ -15,15 +13,13 @@ import com.google.api.client.http.FileContent
 import com.google.api.client.http.InputStreamContent
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.DriveScopes
-import id.zelory.compressor.Compressor
-import kotlinx.coroutines.Dispatchers
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.withContext
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
+import kotlinx.datetime.Clock
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -127,6 +123,7 @@ class DriveRemoteSourceImpl(
             name = fileName
             parents = Collections.singletonList(folderId)
         }
+        Firebase.firestore.collection("TEST").add(mapOf("datetime" to Clock.System.now().epochSeconds,"readable" to Clock.System.now().toString()))
         val contentResolver: ContentResolver = context.contentResolver
         val inputStream: InputStream? = contentResolver.openInputStream(fileUri)
         val fileSize: Long = contentResolver.openFileDescriptor(fileUri, "r")?.statSize ?: -1
@@ -168,19 +165,63 @@ class DriveRemoteSourceImpl(
 
     override fun createFolder(
         account: GoogleSignInAccount,
-        folderName: String
+        folderName: String,
+        mainFolderName: String
     ): String {
-        val isFolderExists = isFolderExist(account, folderName)
-        if (isFolderExists.isNotEmpty()) {
-            return isFolderExists
+        val driveService = createDriveService(account)
+
+        // Find or create the main folder if provided
+        val parentFolderId = if (mainFolderName.isNotEmpty()) {
+            val mainFolderId = isFolderExist(account, mainFolderName)
+            if (mainFolderId.isNotEmpty()) {
+                mainFolderId
+            } else {
+                // Create the main folder if it doesn't exist
+                val mainFolderMetadata = com.google.api.services.drive.model.File().apply {
+                    name = mainFolderName
+                    mimeType = "application/vnd.google-apps.folder"
+                }
+                try {
+                    val mainFolder = driveService.files()
+                        .create(mainFolderMetadata)
+                        .setFields("id")
+                        .execute()
+                    mainFolder.id
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    Log.e("UPLOAD_ERROR", "Failed to create main folder: ${e.message}", e)
+                    return ""
+                }
+            }
+        } else {
+            // Use the root folder as the parent
+            "root"
         }
+
+        // Check if the target folder already exists in the parent folder
+        val query = "name = '$folderName' and mimeType = 'application/vnd.google-apps.folder' and '$parentFolderId' in parents"
+        val existingFolders = driveService.files().list()
+            .setQ(query)
+            .setFields("files(id, name)")
+            .execute()
+            .files
+
+        if (existingFolders.isNotEmpty()) {
+            return existingFolders.first().id
+        }
+
+        // Create the folder within the specified parent folder
         val fileMetadata = com.google.api.services.drive.model.File().apply {
             name = folderName
             mimeType = "application/vnd.google-apps.folder"
+            parents = listOf(parentFolderId)
         }
+
         try {
-            val driveService = createDriveService(account)
-            val folder = driveService.files().create(fileMetadata).setFields("id, name").execute()
+            val folder = driveService.files()
+                .create(fileMetadata)
+                .setFields("id, name")
+                .execute()
             Log.d("UPLOAD_SUCCESS", "Folder ID: ${folder.id} ${folder.name}")
             return folder.id
         } catch (e: Exception) {
@@ -189,6 +230,7 @@ class DriveRemoteSourceImpl(
             return ""
         }
     }
+
 
     override fun uploadFileToFolder(
         account: GoogleSignInAccount,
