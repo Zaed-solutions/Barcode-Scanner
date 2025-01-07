@@ -50,7 +50,8 @@ fun FolderItem(
     onAddImageClicked: () -> Unit = {},
     onDeleteImage: (Uri) -> Unit = {},
     onDeleteFolderClicked: () -> Unit = {},
-    onUploadClicked: () -> Unit = {}
+    onUploadClicked: () -> Unit = {},
+    onImageClicked: (Uri) -> Unit = {}
 ) {
     var isExpanded by remember { mutableStateOf(false) }
     val rotationAnim = remember { Animatable(0f) }
@@ -159,7 +160,11 @@ fun FolderItem(
             }
             // Expandable Content
             if (isExpanded) {
-                ProductImagesList(images = folder.images, onDeleteImage = onDeleteImage)
+                ProductImagesList(
+                    images = folder.images,
+                    onDeleteImage = onDeleteImage,
+                    onImageClicked = onImageClicked
+                )
             }
 
             Icon(

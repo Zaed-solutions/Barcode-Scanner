@@ -37,6 +37,7 @@ import com.zaed.barcodescanner.data.models.ProductImage
 fun ProductImagesList(
     modifier: Modifier = Modifier,
     images: List<ProductImage>,
+    onImageClicked: (Uri) -> Unit = {},
     onDeleteImage: (Uri) -> Unit = {},
 ) {
     AnimatedContent(targetState = images.isEmpty()) { state ->
@@ -58,6 +59,7 @@ fun ProductImagesList(
                     images.forEach { image ->
                         ProductImageItem(
                             image = image,
+                            onImageClick = {onImageClicked(image.uri)},
                             onDeleteImage = { onDeleteImage(image.uri) }
                         )
                     }
@@ -72,12 +74,14 @@ fun ProductImageItem(
     modifier: Modifier = Modifier,
     image: ProductImage,
     onDeleteImage: () -> Unit,
+    onImageClick: () -> Unit = {},
 ) {
     Surface(
         modifier = modifier.size(height = 72.dp, width = 64.dp),
         shape = MaterialTheme.shapes.medium,
         border = BorderStroke(width = 0.5.dp, color = MaterialTheme.colorScheme.surfaceVariant),
         tonalElevation = 0.1.dp,
+        onClick = {onImageClick() }
     ) {
         Box(
             modifier = Modifier.fillMaxSize(),

@@ -25,6 +25,7 @@ class MainViewModel(
 init {
     getCurrentAccount()
     getMainFolderName()
+    searchFolderAndGetImages("1234567")
 }
 
     private fun getMainFolderName() {
@@ -108,6 +109,28 @@ init {
             it.copy(
                 thereIsFoldersNotUploadedYet = false
             )
+        }
+    }
+    fun searchFolderAndGetImages(folderName: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            viewModelScope.launch(Dispatchers.IO) {
+                googleAuth.getSignedInAccount().collect { result ->
+                    result.onSuccess { account ->
+                        _uiState.update { it.copy(needToLogin = false) }
+                        driveRemoteSource.searchFolderAndGetImages(account,folderName).collect{result->
+                            result.onSuccess {
+                                Log.d("UPLOAD_SUCCESS", "searchFolderAndGetImages: $it")
+                            }.onFailure {
+                                Log.d("UPLOAD_SUCCESS", "searchFolderAndGetImages: ${it.message}")
+                            }
+                        }
+                    }.onFailure {
+                        _uiState.update { it.copy(needToLogin = true) }
+                    }
+                }
+            }
+
+
         }
     }
 

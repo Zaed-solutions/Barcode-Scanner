@@ -3,6 +3,8 @@ package com.zaed.barcodescanner.ui.main
 import android.net.Uri
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,10 +13,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
 import androidx.compose.material.icons.filled.DocumentScanner
-import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,7 +32,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -40,12 +43,18 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.rememberAsyncImagePainter
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 import com.zaed.barcodescanner.R
@@ -242,6 +251,9 @@ fun MainScreenContent(
     var isOptionsMenuVisible by remember {
         mutableStateOf(false)
     }
+    var isFullScreenImageVisible by remember {
+        mutableStateOf(false to Uri.EMPTY)
+    }
     LaunchedEffect(key1 = needToLogin) {
         if (needToLogin) {
             isNeedToLoginSheetVisible = true
@@ -277,68 +289,80 @@ fun MainScreenContent(
                     }
                 },
                 actions = {
-                    Box(
-                        modifier = Modifier
-                            .wrapContentSize(Alignment.TopEnd)
-                    ) {
-                        IconButton(
-                            onClick = { isOptionsMenuVisible = !isOptionsMenuVisible },
-                        ) {
+                    Row() {
+                        IconButton({
+                            //TODO: Search
+                        }) {
                             Icon(
-                                imageVector = Icons.Default.MoreVert,
-                                contentDescription = null,
+                                imageVector = Icons.Default.Search,
+                                contentDescription = null
                             )
                         }
-                        DropdownMenu(
-                            expanded = isOptionsMenuVisible,
-                            onDismissRequest = { isOptionsMenuVisible = false }
+                        Box(
+                            modifier = Modifier
+                                .wrapContentSize(Alignment.TopEnd)
                         ) {
-                            DropdownMenuItem(
-                                onClick = {
-                                    isOptionsMenuVisible = false
-                                    isEnterBarCodeManuallySheetVisible = true
-                                },
-                                text = {
-                                    Text(
-                                        text = stringResource(R.string.add_folder),
-                                    )
-                                },
-                            )
-                            DropdownMenuItem(
-                                onClick = {
-                                    onAction(MainUiAction.OnUploadFolders)
-                                    isOptionsMenuVisible = false
-                                },
-                                text = {
-                                    Text(
-                                        text = stringResource(R.string.upload_all),
-                                    )
-                                },
-                            )
-                            DropdownMenuItem(
-                                onClick = {
-                                    onAction(MainUiAction.OnDeleteAllFoldersClicked)
-                                    isOptionsMenuVisible = false
-                                },
-                                text = {
-                                    Text(
-                                        text = stringResource(R.string.delete_all),
-                                    )
-                                },
-                            )
-                            DropdownMenuItem(
-                                onClick = {
-                                    navigateToLogin()
-                                    isOptionsMenuVisible = false
-                                },
-                                text = {
-                                    Text(
-                                        text = stringResource(R.string.settings),
-                                    )
-                                },
-                            )
+                            IconButton(
+                                onClick = { isOptionsMenuVisible = !isOptionsMenuVisible },
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = null,
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = isOptionsMenuVisible,
+                                onDismissRequest = { isOptionsMenuVisible = false }
+                            ) {
+                                DropdownMenuItem(
+                                    onClick = {
+                                        isOptionsMenuVisible = false
+                                        isEnterBarCodeManuallySheetVisible = true
+                                    },
+                                    text = {
+                                        Text(
+                                            text = stringResource(R.string.add_folder),
+                                        )
+                                    },
+                                )
+                                DropdownMenuItem(
+                                    onClick = {
+                                        onAction(MainUiAction.OnUploadFolders)
+                                        isOptionsMenuVisible = false
+                                    },
+                                    text = {
+                                        Text(
+                                            text = stringResource(R.string.upload_all),
+                                        )
+                                    },
+                                )
+                                DropdownMenuItem(
+                                    onClick = {
+                                        onAction(MainUiAction.OnDeleteAllFoldersClicked)
+                                        isOptionsMenuVisible = false
+                                    },
+                                    text = {
+                                        Text(
+                                            text = stringResource(R.string.delete_all),
+                                        )
+                                    },
+                                )
+                                DropdownMenuItem(
+                                    onClick = {
+                                        navigateToLogin()
+                                        isOptionsMenuVisible = false
+                                    },
+                                    text = {
+                                        Text(
+                                            text = stringResource(R.string.settings),
+                                        )
+                                    },
+                                )
+                            }
                         }
+
                     }
+
                 }
             )
         },
@@ -367,6 +391,9 @@ fun MainScreenContent(
                 modifier = Modifier
                     .fillMaxWidth(),
                 folders = folders,
+                onImageClicked = { uri ->
+                    isFullScreenImageVisible = true to uri
+                },
                 onAddImageClicked = { folderName ->
                     onAction(MainUiAction.OnAddProductImageClicked(folderName))
                 },
@@ -401,6 +428,63 @@ fun MainScreenContent(
                             selectedFolderName = ""
                         }
                     )
+                }
+            }
+            AnimatedVisibility(isFullScreenImageVisible.first) {
+                ModalBottomSheet(
+                    dragHandle = {},
+                    onDismissRequest = {
+                        isFullScreenImageVisible = false to Uri.EMPTY
+                    },
+                    shape = RoundedCornerShape(0.dp),
+                    sheetState = rememberModalBottomSheetState(
+                        skipPartiallyExpanded = true
+                    ),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Box(Modifier.fillMaxSize()) {
+                        Log.d("tezoMain", "MainScreenContent: ${isFullScreenImageVisible.second}")
+                        var scale by remember { mutableStateOf(1f) }
+                        var offset by remember { mutableStateOf(Offset(0f, 0f)) }
+                        Image(
+                            modifier = Modifier.align(Alignment.Center).pointerInput(Unit) {
+                                detectTransformGestures { _, pan, zoom, _ ->
+                                    // Update the scale based on zoom gestures.
+                                    scale *= zoom
+
+                                    // Limit the zoom levels within a certain range (optional).
+                                    scale = scale.coerceIn(0.5f, 3f)
+
+                                    // Update the offset to implement panning when zoomed.
+                                    offset = if (scale == 1f) Offset(0f, 0f) else offset + pan
+                                }
+                            }
+                                .graphicsLayer(
+                                    scaleX = scale, scaleY = scale,
+                                    translationX = offset.x, translationY = offset.y
+                                ),
+                            painter = rememberAsyncImagePainter(
+                                model = isFullScreenImageVisible.second,
+                                contentScale = ContentScale.Fit,
+                                filterQuality = FilterQuality.High
+                            ),
+                            contentDescription = "Attachment BackGround",
+                        )
+                        IconButton(
+                            modifier = Modifier
+                                .padding(24.dp)
+                                .size(32.dp),
+                            onClick = {
+                                isFullScreenImageVisible = false to Uri.EMPTY
+                            }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Default.ArrowBackIos,
+                                contentDescription = "back",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.align(Alignment.TopStart)
+                            )
+                        }
+                    }
                 }
             }
             AnimatedVisibility(isNeedToLoginSheetVisible) {

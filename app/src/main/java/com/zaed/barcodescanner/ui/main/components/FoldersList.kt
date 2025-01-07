@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.dp
 import com.zaed.barcodescanner.R
 import com.zaed.barcodescanner.data.models.ProductsFolder
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun FoldersList(
     modifier: Modifier = Modifier,
@@ -27,6 +26,7 @@ fun FoldersList(
     onDeleteImage: (folderName: String, imageUri: Uri) -> Unit = { _, _ -> },
     onDeleteFolderClicked: (folderName: String) -> Unit = {},
     onUploadFolder: (folderName: String) -> Unit = {},
+    onImageClicked: (Uri) -> Unit = {},
 ) {
     AnimatedContent(targetState = folders.isEmpty(), label = "folder animated content") { state ->
         when {
@@ -51,6 +51,7 @@ fun FoldersList(
                             onAddImageClicked = {
                                 onAddImageClicked(folder.name)
                             },
+                            onImageClicked = onImageClicked,
                             onDeleteFolderClicked = {
                                 onDeleteFolderClicked(folder.name)
                             },

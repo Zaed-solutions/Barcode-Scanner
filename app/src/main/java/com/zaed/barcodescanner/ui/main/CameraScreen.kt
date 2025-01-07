@@ -17,25 +17,32 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
+import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Badge
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -58,11 +65,12 @@ import coil.compose.rememberAsyncImagePainter
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CameraPreviewScreen(
     imageQuality: Int = 20,
     onImageCapturedFailed: () -> Unit = {},
-    onDismiss:() ->Unit = {},
+    onDismiss: () -> Unit = {},
     submitImages: (List<Uri>) -> Unit = {}
 ) {
     var uris = remember { mutableListOf<Uri>() }
@@ -93,11 +101,14 @@ fun CameraPreviewScreen(
             println("Error initializing CameraX: ${e.message}")
         }
     }
-
+    var isFullScreenImageVisible by remember {
+        mutableStateOf(false)
+    }
     Box(
         modifier = Modifier
             .fillMaxSize()
     ) {
+
         AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
         Box(
             modifier = Modifier
@@ -134,7 +145,7 @@ fun CameraPreviewScreen(
                     .padding(end = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                AnimatedVisibility(uriCount>0) {
+                AnimatedVisibility(uriCount > 0) {
 
                     Surface(
                         modifier = Modifier.size(64.dp),
@@ -144,6 +155,9 @@ fun CameraPreviewScreen(
                             color = MaterialTheme.colorScheme.surfaceVariant
                         ),
                         tonalElevation = 0.1.dp,
+                        onClick = {
+                            isFullScreenImageVisible = true
+                        }
                     ) {
                         Box(
                             modifier = Modifier.fillMaxSize(),
@@ -172,7 +186,7 @@ fun CameraPreviewScreen(
                     }
                 }
                 IconButton(
-                    enabled = uriCount>0,
+                    enabled = uriCount > 0,
                     onClick = {
                         Log.d("teno", "sumbit: ${uris.size}")
                         submitImages(uris)
@@ -222,6 +236,74 @@ fun CameraPreviewScreen(
 
 
         }
+        AnimatedVisibility(isFullScreenImageVisible) {
+            ModalBottomSheet(
+                dragHandle = {},
+                onDismissRequest = {
+                    isFullScreenImageVisible = false
+                },
+                shape = RoundedCornerShape(0.dp),
+                sheetState = rememberModalBottomSheetState(
+                    skipPartiallyExpanded = true
+                ),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                LazyColumn(
+                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp)
+                ){
+                    item {
+                        IconButton(
+                            modifier = Modifier
+                                .padding(24.dp)
+                                .size(32.dp),
+                            onClick = {
+                                isFullScreenImageVisible = false
+                            }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Default.ArrowBackIos,
+                                contentDescription = "back",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier
+                            )
+                        }
+                    }
+                    items(uris) { uri ->
+                        Box() {
+                            Image(
+                                modifier = Modifier.heightIn(min = 350.dp).fillMaxWidth(),
+                                painter = rememberAsyncImagePainter(
+                                    model = uri,
+                                    contentScale = ContentScale.FillWidth,
+                                    filterQuality = FilterQuality.High
+                                ),
+                                contentDescription = "Attachment BackGround",
+                            )
+                            IconButton(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(16.dp)
+                                    .size(32.dp),
+                                onClick = {
+                                    uris.remove(uri)
+                                    uriCount--
+                                }) {
+                                Icon(
+                                    imageVector = Icons.Default.Cancel,
+                                    contentDescription = "back",
+                                    tint = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.background(
+                                        color = MaterialTheme.colorScheme.onError,
+                                        shape = CircleShape
+                                    ).padding(2.dp)
+                                )
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+
 
     }
     // Bottom button bar

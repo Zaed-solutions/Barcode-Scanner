@@ -153,6 +153,12 @@ class DriveRemoteSourceImpl(
             }
             val uploadedFile = request.execute()
             Log.d("UPLOAD_SUCCESS", "File ID: ${uploadedFile.id}")
+            val permission = com.google.api.services.drive.model.Permission().apply {
+                type = "anyone" // Public access
+                role = "reader" // View-only
+            }
+            driveService.permissions().create(uploadedFile.id, permission).execute()
+            Log.d("UPLOAD_SUCCESS", "Public access granted: ${uploadedFile.webViewLink}")
         } catch (e: Exception) {
             trySend(Result.failure(e))
             Log.e("UPLOAD_SUCCESS", "Failed to upload file: ${e.message}", e)
@@ -342,4 +348,60 @@ class DriveRemoteSourceImpl(
             return ""
         }
     }
+    override fun searchFolderAndGetImages(
+        account: GoogleSignInAccount,
+        folderName: String
+    ): Flow<Result<List<String>>> = flow {
+        try {
+            val driveService = createDriveService(account)
+            var folderIds = mutableListOf<String>()
+
+            val files = mutableListOf<com.google.api.services.drive.model.File>()
+            var pageToken: String? = null
+            do {
+                val result = driveService.files().list()
+                    .setQ("mimeType = 'application/vnd.google-apps.folder'")
+                    .setFields("nextPageToken, files(id, name)")
+                    .setPageToken(pageToken)
+                    .execute()
+                for (file in result.files) {
+                    if (file.name == folderName) {
+                        Log.d("UPLOAD_SUCCESS", "File: ${file.name} (${file.id})")
+                        folderIds.add(file.id)
+                    }
+                }
+                files.addAll(result.files)
+                pageToken = result.nextPageToken
+            } while (pageToken != null)
+            if (folderIds.isEmpty()) {
+                emit(Result.failure(Exception("Folder not found: $folderName")))
+                return@flow
+            }
+            // Retrieve image files inside the folder
+            val imageLinks = mutableListOf<String>()
+            pageToken = null
+            do {
+                val folderIdQuery = folderIds.joinToString(" or ") { "'$it' in parents" }
+                val query = "mimeType contains 'image/' and ($folderIdQuery)"
+
+                val result = driveService.files().list()
+                    .setQ(query)
+                    .setFields("nextPageToken, files(id, name, webViewLink, permissions)")
+                    .setPageToken(pageToken)
+                    .execute()
+
+                for (file in result.files) {
+                    file.id?.let { imageLinks.add("https://drive.usercontent.google.com/download?id=$it") }
+                    Log.d("IMAGE_FOUND", "Image File: ${file.name} (${file.id})")
+                }
+                pageToken = result.nextPageToken
+            } while (pageToken != null)
+
+            emit(Result.success(imageLinks))
+        } catch (e: Exception) {
+            emit(Result.failure(e))
+            Log.e("SEARCH_ERROR", "Failed to search folder or retrieve images: ${e.message}", e)
+        }
+    }
+
 }

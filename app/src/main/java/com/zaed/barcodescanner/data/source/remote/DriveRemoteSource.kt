@@ -32,4 +32,9 @@ interface DriveRemoteSource {
         folderId: String,
         folderName: String
     ): Flow<Result<Pair<String,Float>>>
+
+    fun searchFolderAndGetImages(
+        account: GoogleSignInAccount,
+        folderName: String
+    ): Flow<Result<List<String>>>
 }
