@@ -38,7 +38,7 @@
     <string name="enter_barcode">ادخل الباركود</string>
     <string name="barcode">باركود</string>
     <string name="barcode_cannot_be_empty">اسم المجلد مطلوب</string>
-    <string name="barcode_must_be_at_least_7_characters">اسم المجلد يجب الا يزيد عن 7 خانات</string>
+    <string name="barcode_must_be_at_least_7_characters">"اسم المجلد يجب ان يكون 5 او 7 خانات "</string>
     <string name="create">انشاء</string>
     <string name="apply_edits">طبق التعديل</string>
     <string name="if_the_folder_name_is_empty_it_will_save_to_the_root">اذا كان اسم المجلد فارغ فهذا يعني انه يحفظ بالجذر</string>
@@ -47,5 +47,6 @@
     <string name="edit">تعديل</string>
     <string name="add_folder">أضف مجلد</string>
     <string name="settings">الإعدادات</string>
+    <string name="no_results_found">لا توجد نتائج</string>
 
 </resources>

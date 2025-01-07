@@ -37,7 +37,7 @@
     <string name="enter_barcode">Enter Barcode</string>
     <string name="barcode">Barcode</string>
     <string name="barcode_cannot_be_empty">Folder name cannot be empty</string>
-    <string name="barcode_must_be_at_least_7_characters">Folder name cannot be longer than 7 characters</string>
+    <string name="barcode_must_be_at_least_7_characters">Folder name should be 5 or 7 characters</string>
     <string name="create">Create</string>
     <string name="apply_edits">Apply Edits</string>
     <string name="if_the_folder_name_is_empty_it_will_save_to_the_root">If the folder name is empty it will save to the root</string>

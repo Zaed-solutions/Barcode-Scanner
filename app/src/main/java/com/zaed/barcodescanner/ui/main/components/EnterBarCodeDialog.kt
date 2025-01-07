@@ -63,7 +63,7 @@ fun EnterBarCodeDialog(
                     if (barcode.isEmpty()) {
                         isBarcodeValid = false
                         errorMessage = context.getString(R.string.barcode_cannot_be_empty)
-                    } else if (barcode.length > 7) {
+                    } else if (barcode.length != 5 && barcode.length != 7) {
                         isBarcodeValid = false
                         errorMessage =
                             context.getString(R.string.barcode_must_be_at_least_7_characters)
@@ -96,7 +96,7 @@ fun EnterBarCodeDialog(
                     if (barcode.isEmpty()) {
                         isBarcodeValid = false
                         errorMessage = context.getString(R.string.barcode_cannot_be_empty)
-                    } else if (barcode.length > 7) {
+                    } else if (barcode.length != 5 && barcode.length != 7) {
                         isBarcodeValid = false
                         errorMessage =
                             context.getString(R.string.barcode_must_be_at_least_7_characters)
