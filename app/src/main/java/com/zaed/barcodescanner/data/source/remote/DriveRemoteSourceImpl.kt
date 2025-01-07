@@ -13,8 +13,6 @@ import com.google.api.client.http.FileContent
 import com.google.api.client.http.InputStreamContent
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.DriveScopes
-import com.google.firebase.firestore.ktx.firestore
-import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -123,7 +121,6 @@ class DriveRemoteSourceImpl(
             name = fileName
             parents = Collections.singletonList(folderId)
         }
-        Firebase.firestore.collection("TEST").add(mapOf("datetime" to Clock.System.now().epochSeconds,"readable" to Clock.System.now().toString()))
         val contentResolver: ContentResolver = context.contentResolver
         val inputStream: InputStream? = contentResolver.openInputStream(fileUri)
         val fileSize: Long = contentResolver.openFileDescriptor(fileUri, "r")?.statSize ?: -1

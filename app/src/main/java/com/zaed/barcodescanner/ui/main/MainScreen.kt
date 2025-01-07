@@ -153,14 +153,14 @@ fun MainScreen(
                         .build()
                     val scanner = GmsBarcodeScanning.getClient(context, options)
                     scanner.startScan().addOnSuccessListener { barCode ->
-                        if ((barCode.rawValue?.trim()?.length ?: 0) > 7) {
+                        val code = barCode.rawValue?.trim() ?: ""
+                        if (code.length != 5 && code.length != 7) {
                             scope.launch {
                                 snackbarHostState.showSnackbar(context.getString(R.string.invalid_barcode))
                             }
                             return@addOnSuccessListener
                         } else {
                             Log.d("Barcode", "${barCode.rawValue}")
-                            val code = barCode.rawValue?.trim() ?: ""
                             if (code.isNotBlank() && state.folders.none { it.name == code }) {
                                 viewModel.handleAction(
                                     MainUiAction.OnAddNewFolder(

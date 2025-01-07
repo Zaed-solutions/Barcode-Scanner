@@ -160,9 +160,14 @@ init {
                                                 }
                                             )
                                         }
+                                        if (uiState.value.folders.firstOrNull{ it.name == folderName }?.images?.all { it.isUploaded } == true) {
+                                            _uiState.update { oldState ->
+                                                oldState.copy(folders = oldState.folders.filter { it.name != folderName })
+                                            }
+                                        }
                                         Log.d("UPLOAD_SUCCESS", "uploadFolders: $data")
-                                    }
-                                    result.onFailure {
+
+                                    }.onFailure {
                                         Log.d("UPLOAD_SUCCESS", "uploadFolders: ${it.message}")
                                     }
                                 }
@@ -237,8 +242,7 @@ init {
                                                 }
                                         }
                                         Log.d("UPLOAD_SUCCESS", "uploadFolders: $data")
-                                    }
-                                    result.onFailure {
+                                    }.onFailure {
                                         Log.d("UPLOAD_SUCCESS", "uploadFolders: ${it.message}")
                                     }
                                 }
