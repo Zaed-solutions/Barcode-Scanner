@@ -15,5 +15,9 @@ sealed interface Route {
     @Serializable
     data object CameraRoute : Route
 
+    @Serializable
+    data object SearchRoute : Route
+
+
 
 }

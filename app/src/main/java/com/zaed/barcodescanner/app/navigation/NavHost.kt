@@ -11,6 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.zaed.barcodescanner.ui.account.ManageAccountScreen
 import com.zaed.barcodescanner.ui.main.MainScreen
+import com.zaed.barcodescanner.ui.search.SearchScreen
 
 @Composable
 fun NavigationHost(
@@ -38,21 +39,31 @@ fun NavigationHost(
     ) {
         composable<Route.MainRoute> {
             MainScreen(
+                navigateToSearch = {
+                    navController.navigate(Route.SearchRoute)
+                },
                 navigateToLogin = {
                     navController.navigate(Route.ManageAccountRoute)
                 },
             )
         }
-
         composable<Route.ManageAccountRoute> {
             ManageAccountScreen(
                 onBackPressed = {
                     navController.popBackStack()
                 }
             )
-
+        }
+        composable<Route.SearchRoute> {
+            SearchScreen(
+                navigateToLogin = {
+                    navController.navigate(Route.ManageAccountRoute)
+                },
+                navigateBack = {
+                    navController.popBackStack()
+                }
+            )
         }
     }
-
 }
 

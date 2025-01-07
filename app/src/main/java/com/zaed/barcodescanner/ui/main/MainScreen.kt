@@ -59,6 +59,7 @@ import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 import com.zaed.barcodescanner.R
 import com.zaed.barcodescanner.data.models.ProductsFolder
+import com.zaed.barcodescanner.ui.components.StatefulAsyncImage
 import com.zaed.barcodescanner.ui.main.components.ConfirmDeleteAllFoldersDialog
 import com.zaed.barcodescanner.ui.main.components.ConfirmDeleteDialog
 import com.zaed.barcodescanner.ui.main.components.ConfirmNavigateToLoginDialog
@@ -76,7 +77,8 @@ fun MainScreen(
     modifier: Modifier = Modifier,
     viewModel: MainViewModel = koinViewModel(),
     navigateToLogin: () -> Unit = {},
-    imageQuality: Int = 20
+    imageQuality: Int = 20,
+    navigateToSearch: () -> Unit = {}
 ) {
     LaunchedEffect(true) {
         Log.d(TAG, "MainScreen: LaunchedEffect")
@@ -204,6 +206,9 @@ fun MainScreen(
                 MainUiAction.OnWriteBarcodeManuallyClicked -> {
 
                 }
+                MainUiAction.OnSearchClicked -> {
+                    navigateToSearch()
+                }
 
                 else -> viewModel.handleAction(action)
             }
@@ -291,7 +296,7 @@ fun MainScreenContent(
                 actions = {
                     Row() {
                         IconButton({
-                            //TODO: Search
+                            onAction(MainUiAction.OnSearchClicked)
                         }) {
                             Icon(
                                 imageVector = Icons.Default.Search,
@@ -442,49 +447,12 @@ fun MainScreenContent(
                     ),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    Box(Modifier.fillMaxSize()) {
-                        Log.d("tezoMain", "MainScreenContent: ${isFullScreenImageVisible.second}")
-                        var scale by remember { mutableStateOf(1f) }
-                        var offset by remember { mutableStateOf(Offset(0f, 0f)) }
-                        Image(
-                            modifier = Modifier.align(Alignment.Center).pointerInput(Unit) {
-                                detectTransformGestures { _, pan, zoom, _ ->
-                                    // Update the scale based on zoom gestures.
-                                    scale *= zoom
-
-                                    // Limit the zoom levels within a certain range (optional).
-                                    scale = scale.coerceIn(0.5f, 3f)
-
-                                    // Update the offset to implement panning when zoomed.
-                                    offset = if (scale == 1f) Offset(0f, 0f) else offset + pan
-                                }
-                            }
-                                .graphicsLayer(
-                                    scaleX = scale, scaleY = scale,
-                                    translationX = offset.x, translationY = offset.y
-                                ),
-                            painter = rememberAsyncImagePainter(
-                                model = isFullScreenImageVisible.second,
-                                contentScale = ContentScale.Fit,
-                                filterQuality = FilterQuality.High
-                            ),
-                            contentDescription = "Attachment BackGround",
-                        )
-                        IconButton(
-                            modifier = Modifier
-                                .padding(24.dp)
-                                .size(32.dp),
-                            onClick = {
-                                isFullScreenImageVisible = false to Uri.EMPTY
-                            }) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Default.ArrowBackIos,
-                                contentDescription = "back",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.align(Alignment.TopStart)
-                            )
+                    ZoomableImage(
+                        imageLink = isFullScreenImageVisible.second.toString(),
+                        closePreview = {
+                            isFullScreenImageVisible = false to Uri.EMPTY
                         }
-                    }
+                    )
                 }
             }
             AnimatedVisibility(isNeedToLoginSheetVisible) {
@@ -579,6 +547,53 @@ fun MainScreenContent(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+ fun ZoomableImage(
+     imageLink :String,
+     closePreview: () -> Unit = {}
+ ) {
+    Box(Modifier.fillMaxSize()) {
+        var scale by remember { mutableStateOf(1f) }
+        var offset by remember { mutableStateOf(Offset(0f, 0f)) }
+        StatefulAsyncImage(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .pointerInput(Unit) {
+                    detectTransformGestures { _, pan, zoom, _ ->
+                        // Update the scale based on zoom gestures.
+                        scale *= zoom
+
+                        // Limit the zoom levels within a certain range (optional).
+                        scale = scale.coerceIn(0.5f, 3f)
+
+                        // Update the offset to implement panning when zoomed.
+                        offset = if (scale == 1f) Offset(0f, 0f) else offset + pan
+                    }
+                }
+                .graphicsLayer(
+                    scaleX = scale, scaleY = scale,
+                    translationX = offset.x, translationY = offset.y
+                ),
+            imageUrl = imageLink,
+        )
+        IconButton(
+            modifier = Modifier
+                .padding(24.dp)
+                .size(32.dp),
+            onClick = {
+                closePreview()
+
+            }) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Default.ArrowBackIos,
+                contentDescription = "back",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.TopStart)
+            )
         }
     }
 }

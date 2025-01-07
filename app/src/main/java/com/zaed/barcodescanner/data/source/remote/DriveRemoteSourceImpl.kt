@@ -356,25 +356,23 @@ class DriveRemoteSourceImpl(
             val driveService = createDriveService(account)
             var folderIds = mutableListOf<String>()
 
-            val files = mutableListOf<com.google.api.services.drive.model.File>()
             var pageToken: String? = null
             do {
+                Log.d("UPLOAD_SUCCESS5", "Start do: $pageToken")
                 val result = driveService.files().list()
-                    .setQ("mimeType = 'application/vnd.google-apps.folder'")
+                    .setQ("mimeType = 'application/vnd.google-apps.folder' and name = '$folderName'")
                     .setFields("nextPageToken, files(id, name)")
                     .setPageToken(pageToken)
                     .execute()
-                for (file in result.files) {
-                    if (file.name == folderName) {
-                        Log.d("UPLOAD_SUCCESS", "File: ${file.name} (${file.id})")
-                        folderIds.add(file.id)
-                    }
+                Log.d("UPLOAD_SUCCESS5", "after result: $pageToken")
+                if( result.files.isNotEmpty()){
+                    folderIds.addAll(result.files.map { it.id })
                 }
-                files.addAll(result.files)
+                Log.d("UPLOAD_SUCCESS5", "after for: $pageToken")
                 pageToken = result.nextPageToken
             } while (pageToken != null)
             if (folderIds.isEmpty()) {
-                emit(Result.failure(Exception("Folder not found: $folderName")))
+                emit(Result.success(emptyList()))
                 return@flow
             }
             // Retrieve image files inside the folder

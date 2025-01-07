@@ -16,5 +16,7 @@ sealed interface MainUiAction {
     data object OnDeleteAllFoldersClicked: MainUiAction
     data object OnDeleteAllFolders: MainUiAction
     data object OnWriteBarcodeManuallyClicked: MainUiAction
+    data object OnSearchClicked: MainUiAction
+
 
 }
