@@ -1,9 +1,15 @@
 package com.zaed.barcodescanner.ui.main
 
+import android.Manifest
+import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.util.Log
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,12 +19,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
 import androidx.compose.material.icons.filled.DocumentScanner
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,18 +52,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.rememberAsyncImagePainter
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 import com.zaed.barcodescanner.R
@@ -66,6 +73,9 @@ import com.zaed.barcodescanner.ui.main.components.ConfirmNavigateToLoginDialog
 import com.zaed.barcodescanner.ui.main.components.EnterBarCodeDialog
 import com.zaed.barcodescanner.ui.main.components.FoldersList
 import com.zaed.barcodescanner.ui.util.createImageFile
+import com.zaed.barcodescanner.ui.util.downloadImage
+import com.zaed.barcodescanner.ui.util.downloadImageWithMediaStore
+import com.zaed.barcodescanner.ui.util.shareImageFromUrl
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
@@ -206,6 +216,7 @@ fun MainScreen(
                 MainUiAction.OnWriteBarcodeManuallyClicked -> {
 
                 }
+
                 MainUiAction.OnSearchClicked -> {
                     navigateToSearch()
                 }
@@ -552,10 +563,23 @@ fun MainScreenContent(
 }
 
 @Composable
- fun ZoomableImage(
-     imageLink :String,
-     closePreview: () -> Unit = {}
- ) {
+fun ZoomableImage(
+    imageLink: String,
+    closePreview: () -> Unit = {}
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            scope.launch {
+                downloadImage(context, imageLink)
+            }
+        } else {
+            Toast.makeText(context, "Permission denied", Toast.LENGTH_SHORT).show()
+        }
+    }
     Box(Modifier.fillMaxSize()) {
         var scale by remember { mutableStateOf(1f) }
         var offset by remember { mutableStateOf(Offset(0f, 0f)) }
@@ -580,20 +604,59 @@ fun MainScreenContent(
                 ),
             imageUrl = imageLink,
         )
-        IconButton(
+        Row(
             modifier = Modifier
+                .align(Alignment.TopStart)
                 .padding(24.dp)
-                .size(32.dp),
-            onClick = {
-                closePreview()
+                .clip(RoundedCornerShape(8.dp))
+                .background(
+                    MaterialTheme.colorScheme.surface
+                        .copy(alpha = 0.3f)
+                ),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                modifier = Modifier,
+                onClick = {
+                    closePreview()
+                }) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Default.ArrowBackIos,
+                    contentDescription = "back",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            IconButton(
+                onClick = {
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                        permissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    } else {
+                        scope.launch {
+                            downloadImageWithMediaStore(context, imageLink)
+                        }
+                    }
+                },
+                modifier = Modifier
 
-            }) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Default.ArrowBackIos,
-                contentDescription = "back",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.align(Alignment.TopStart)
-            )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Download,
+                    contentDescription = "Close",
+                )
+            }
+            IconButton(
+                onClick = {
+                    shareImageFromUrl(context, imageLink)
+                },
+                modifier = Modifier
+
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Share,
+                    contentDescription = "Close",
+                )
+            }
+
         }
     }
 }
