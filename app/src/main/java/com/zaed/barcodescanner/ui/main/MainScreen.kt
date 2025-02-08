@@ -60,12 +60,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -404,6 +407,7 @@ fun MainScreenContent(
                 ){
                     val isUploading = folders.any { it.images.any { it.uploadProgress in 0.1..99.0 } }
                     Button(
+                        enabled = !isUploading,
                         modifier = Modifier.height(56.dp).weight(1f),
                         elevation = ButtonDefaults.buttonElevation(
                             defaultElevation = 2.dp
@@ -614,6 +618,7 @@ fun MainScreenContent(
     }
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ZoomableImage(
     imageLink: String,
@@ -633,52 +638,55 @@ fun ZoomableImage(
             Toast.makeText(context, "Permission denied", Toast.LENGTH_SHORT).show()
         }
     }
+
     var scale by remember { mutableStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
+
     LaunchedEffect(scale) {
         onZoomChanged(scale)
     }
+
     Box(Modifier.fillMaxSize()) {
         StatefulAsyncImage(
             modifier = Modifier
                 .align(Alignment.Center)
                 .pointerInput(Unit) {
                     detectTransformGestures { _, pan, zoom, _ ->
-                        // Update the scale based on zoom gestures.
                         scale *= zoom
-
-                        // Limit the zoom levels within a certain range (optional).
                         scale = scale.coerceIn(1f, 3f)
-
-                        // Update the offset to implement panning when zoomed.
-                        offset = if (scale == 1f)Offset.Zero  else offset + pan
+                        offset = if (scale == 1f) Offset.Zero else offset + pan
+                    }
+                }
+                .pointerInteropFilter { event ->
+                    // Allow parent (HorizontalPager) to handle touch events if not zoomed
+                    if (scale == 1f) {
+                        false  // Don't consume the event; let the pager handle it
+                    } else {
+                        true   // Consume the event; handle panning/zooming
                     }
                 }
                 .graphicsLayer(
-                    scaleX = scale, scaleY = scale,
-                    translationX = offset.x, translationY = offset.y
+                    scaleX = scale,
+                    scaleY = scale,
+                    translationX = offset.x,
+                    translationY = offset.y
                 ),
             imageUrl = imageLink,
         )
+
+        // Top control buttons (Back, Download, Share)
         Row(
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .padding(24.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .background(
-                    MaterialTheme.colorScheme.surface
-                        .copy(alpha = 0.3f)
-                ),
+                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.3f)),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(
-                modifier = Modifier,
-                onClick = {
-                    closePreview()
-                }) {
+            IconButton(onClick = { closePreview() }) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Default.ArrowBackIos,
-                    contentDescription = "back",
+                    contentDescription = "Back",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -687,35 +695,25 @@ fun ZoomableImage(
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                         permissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                     } else {
-                        scope.launch {
-                            downloadImageWithMediaStore(context, imageLink)
-                        }
+                        scope.launch { downloadImageWithMediaStore(context, imageLink) }
                     }
-                },
-                modifier = Modifier
-
+                }
             ) {
                 Icon(
                     imageVector = Icons.Default.Download,
-                    contentDescription = "Close",
+                    contentDescription = "Download",
                 )
             }
-            IconButton(
-                onClick = {
-                    shareImageFromUrl(context, imageLink)
-                },
-                modifier = Modifier
-
-            ) {
+            IconButton(onClick = { shareImageFromUrl(context, imageLink) }) {
                 Icon(
                     imageVector = Icons.Default.Share,
-                    contentDescription = "Close",
+                    contentDescription = "Share",
                 )
             }
-
         }
     }
 }
+
 
 @Preview
 @Composable
