@@ -239,7 +239,7 @@ fun CameraPreviewScreen(
                             uris.add(it)
                             uriCount++
                             scope.launch() {
-                                delay(50)
+                                delay(25)
                                 showFlash = false // Hide flash after delay
                             }
                         },
