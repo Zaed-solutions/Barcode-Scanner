@@ -11,11 +11,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
@@ -28,11 +30,15 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +48,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.contentColorFor
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,6 +61,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -382,20 +390,53 @@ fun MainScreenContent(
                 }
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {
-                    onAction(MainUiAction.OnScanBarcodeClicked)
-                }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.DocumentScanner,
-                    contentDescription = null
-                )
-            }
+        bottomBar = {
+            BottomAppBar (
 
+            ) {
+                Row (
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                ){
+                    Button(
+                        modifier = Modifier.height(56.dp).weight(1f),
+                        elevation = ButtonDefaults.buttonElevation(
+                            defaultElevation = 2.dp
+                        ),
+                        shape = MaterialTheme.shapes.medium,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Green.copy(alpha = 0.7f),
+                            contentColor = contentColorFor(Color.Green)
+
+                        ),
+
+                        onClick = {
+                            onAction(MainUiAction.OnUploadFolders)
+                        }
+                    ) {
+                        Text(
+                            style = MaterialTheme.typography.titleMedium,
+                            text = stringResource(R.string.upload_all))
+                    }
+                    FloatingActionButton(
+                        modifier = Modifier.weight(1f),
+                        elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation(
+                            defaultElevation = 5.dp
+                        ),
+                        onClick = {
+                            onAction(MainUiAction.OnScanBarcodeClicked)
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.DocumentScanner,
+                            contentDescription = null
+                        )
+                    }
+                }
+            }
         },
-        floatingActionButtonPosition = FabPosition.Center
+
     ) { innerPadding ->
         Column(
             modifier = Modifier
