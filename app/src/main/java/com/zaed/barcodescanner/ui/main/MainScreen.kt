@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -33,6 +34,7 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -69,6 +71,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
@@ -183,7 +186,7 @@ fun MainScreen(
                     val scanner = GmsBarcodeScanning.getClient(context, options)
                     scanner.startScan().addOnSuccessListener { barCode ->
                         val code = barCode.rawValue?.trim() ?: ""
-                        if (code.length != 5 && code.length != 7) {
+                        if ((code.length != 5 && code.length != 7) || !code.isDigitsOnly()) {
                             scope.launch {
                                 snackbarHostState.showSnackbar(context.getString(R.string.invalid_barcode))
                             }
@@ -399,6 +402,7 @@ fun MainScreenContent(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
                 ){
+                    val isUploading = folders.any { it.images.any { it.uploadProgress in 0.1..99.0 } }
                     Button(
                         modifier = Modifier.height(56.dp).weight(1f),
                         elevation = ButtonDefaults.buttonElevation(
@@ -415,6 +419,13 @@ fun MainScreenContent(
                             onAction(MainUiAction.OnUploadFolders)
                         }
                     ) {
+                        androidx.compose.animation.AnimatedVisibility(isUploading,
+                        ) {
+                            Spacer(modifier = Modifier.padding(horizontal = 4.dp))
+                            CircularProgressIndicator(
+                            )
+                        }
+
                         Text(
                             style = MaterialTheme.typography.titleMedium,
                             text = stringResource(R.string.upload_all))
