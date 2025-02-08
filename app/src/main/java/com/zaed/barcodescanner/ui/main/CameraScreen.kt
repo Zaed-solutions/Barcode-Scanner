@@ -13,6 +13,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -48,9 +49,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
@@ -62,8 +65,19 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import coil.compose.rememberAsyncImagePainter
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.TransformOrigin
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,6 +99,13 @@ fun CameraPreviewScreen(
             .setJpegQuality(imageQuality)
             .build()
     }
+    var scope = rememberCoroutineScope()
+
+    var isFullScreenImageVisible by remember { mutableStateOf(false) }
+    var showFlash by remember { mutableStateOf(false) }  // Flash state
+
+    // Flash opacity animation
+    val flashAlpha by animateFloatAsState(targetValue = if (showFlash) 1f else 0f)
 
     LaunchedEffect(Unit) {
         val cameraProvider = context.getCameraProvider()
@@ -101,15 +122,33 @@ fun CameraPreviewScreen(
             println("Error initializing CameraX: ${e.message}")
         }
     }
-    var isFullScreenImageVisible by remember {
-        mutableStateOf(false)
-    }
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
 
+    Box(modifier = Modifier.fillMaxSize()) {
         AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
+
+// Flash Overlay with Center Animation
+        AnimatedVisibility(
+            visible = showFlash,
+            enter = scaleIn(
+                animationSpec = tween(durationMillis = 150),
+                initialScale = 0.1f, // Starts small from the center
+                transformOrigin = TransformOrigin.Center
+            ) + fadeIn(animationSpec = tween(150)),
+            exit = scaleOut(
+                animationSpec = tween(durationMillis = 150),
+                targetScale = 0.1f, // Shrinks back to the center
+                transformOrigin = TransformOrigin.Center
+            ) + fadeOut(animationSpec = tween(150))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.White)
+            )
+        }
+
+
+        // Bottom Control Panel
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -124,11 +163,10 @@ fun CameraPreviewScreen(
                     )
                 ),
         ) {
+            // Cancel Button
             IconButton(
-                {
-                    onDismiss()
-
-                }, modifier = Modifier
+                { onDismiss() },
+                modifier = Modifier
                     .align(Alignment.CenterStart)
                     .padding(start = 16.dp)
             ) {
@@ -139,6 +177,8 @@ fun CameraPreviewScreen(
                     modifier = Modifier.size(36.dp),
                 )
             }
+
+            // Submit Button & Thumbnail
             Row(
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
@@ -146,37 +186,23 @@ fun CameraPreviewScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 AnimatedVisibility(uriCount > 0) {
-
                     Surface(
                         modifier = Modifier.size(64.dp),
                         shape = MaterialTheme.shapes.medium,
-                        border = BorderStroke(
-                            width = 0.5.dp,
-                            color = MaterialTheme.colorScheme.surfaceVariant
-                        ),
+                        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.surfaceVariant),
                         tonalElevation = 0.1.dp,
-                        onClick = {
-                            isFullScreenImageVisible = true
-                        }
+                        onClick = { isFullScreenImageVisible = true }
                     ) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center,
-                        ) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Image(
-                                painter = rememberAsyncImagePainter(
-                                    model = uris.last(),
-                                    contentScale = ContentScale.Crop,
-                                    filterQuality = FilterQuality.Low
-                                ),
-                                contentDescription = "Attachment BackGround",
-                                modifier = Modifier.fillMaxSize()
+                                painter = rememberAsyncImagePainter(uris.last()),
+                                contentDescription = "Thumbnail",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
                             )
-
-
                         }
                     }
-                    Badge() {
+                    Badge {
                         Text(
                             text = "$uriCount",
                             color = Color.White,
@@ -185,130 +211,115 @@ fun CameraPreviewScreen(
                         )
                     }
                 }
+
                 IconButton(
                     enabled = uriCount > 0,
                     onClick = {
-                        Log.d("teno", "sumbit: ${uris.size}")
                         submitImages(uris)
                         onDismiss()
-                    },
-
-                    ) {
-
+                    }
+                ) {
                     Icon(
                         imageVector = Icons.Default.Check,
-                        contentDescription = "Cancel",
+                        contentDescription = "Submit",
                         tint = Color.White,
                         modifier = Modifier.size(36.dp),
                     )
                 }
             }
 
+            // Capture Button
             IconButton(
                 {
+                    showFlash = true // Trigger flash animation
                     captureImage(
                         imageCapture = imageCapture,
                         context = context,
                         onImageCaptured = {
-                            Log.d("teno", "CameraPreviewScreen: ${uris.size}")
-
                             uris.add(it)
                             uriCount++
-                            Log.d("teno", "CameraPreviewScreen: ${uris.size}")
-
+                            scope.launch() {
+                                delay(50)
+                                showFlash = false // Hide flash after delay
+                            }
                         },
-                        onImageCapturedFailed = onImageCapturedFailed
+                        onImageCapturedFailed = {
+                            showFlash = false // Hide flash if failed
+                            onImageCapturedFailed()
+                        }
                     )
                 },
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .size(
-                        84.dp
-                    )
+                    .size(84.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Circle,
-                    contentDescription = "Cancel",
+                    contentDescription = "Capture",
                     tint = Color.White,
                     modifier = Modifier.size(84.dp),
                 )
             }
-
-
         }
+
+        // Full-Screen Image Viewer
         AnimatedVisibility(isFullScreenImageVisible) {
             ModalBottomSheet(
                 dragHandle = {},
-                onDismissRequest = {
-                    isFullScreenImageVisible = false
-                },
+                onDismissRequest = { isFullScreenImageVisible = false },
                 shape = RoundedCornerShape(0.dp),
-                sheetState = rememberModalBottomSheetState(
-                    skipPartiallyExpanded = true
-                ),
+                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
                 modifier = Modifier.fillMaxSize()
             ) {
-                LazyColumn(
-                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp)
-                ){
+                LazyColumn(verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(16.dp)) {
                     item {
                         IconButton(
                             modifier = Modifier
                                 .padding(24.dp)
                                 .size(32.dp),
-                            onClick = {
-                                isFullScreenImageVisible = false
-                            }) {
+                            onClick = { isFullScreenImageVisible = false }
+                        ) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Default.ArrowBackIos,
-                                contentDescription = "back",
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBackIos,
+                                contentDescription = "Back",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier
                             )
                         }
                     }
                     items(uris) { uri ->
-                        Box() {
+                        Box {
                             Image(
-                                modifier = Modifier.heightIn(min = 350.dp).fillMaxWidth(),
-                                painter = rememberAsyncImagePainter(
-                                    model = uri,
-                                    contentScale = ContentScale.FillWidth,
-                                    filterQuality = FilterQuality.High
-                                ),
-                                contentDescription = "Attachment BackGround",
+                                painter = rememberAsyncImagePainter(uri),
+                                contentDescription = "Captured Image",
+                                modifier = Modifier
+                                    .heightIn(min = 350.dp)
+                                    .fillMaxWidth(),
+                                contentScale = ContentScale.FillWidth
                             )
                             IconButton(
-                                modifier = Modifier
-                                    .align(Alignment.TopEnd)
-                                    .padding(16.dp)
-                                    .size(32.dp),
                                 onClick = {
                                     uris.remove(uri)
                                     uriCount--
-                                }) {
+                                },
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(16.dp)
+                                    .background(MaterialTheme.colorScheme.onError, CircleShape)
+                                    .size(32.dp)
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.Cancel,
-                                    contentDescription = "back",
+                                    contentDescription = "Remove",
                                     tint = MaterialTheme.colorScheme.error,
-                                    modifier = Modifier.background(
-                                        color = MaterialTheme.colorScheme.onError,
-                                        shape = CircleShape
-                                    ).padding(2.dp)
+                                    modifier = Modifier.padding(2.dp)
                                 )
                             }
                         }
                     }
-
                 }
             }
         }
-
-
     }
-    // Bottom button bar
-
-
 }
 
 
