@@ -1,33 +1,38 @@
 package com.zaed.barcodescanner.ui.search
 
-import android.net.Uri
 import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.ManageSearch
-import androidx.compose.material.icons.automirrored.filled.SendAndArchive
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -37,27 +42,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.FilterQuality
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil.compose.rememberAsyncImagePainter
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.zaed.barcodescanner.R
-import com.zaed.barcodescanner.data.models.ProductsFolder
 import com.zaed.barcodescanner.ui.components.EmptySearchResult
 import com.zaed.barcodescanner.ui.components.StatefulAsyncImage
 import com.zaed.barcodescanner.ui.main.ZoomableImage
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -120,7 +123,7 @@ fun SearchScreenContent(
                 .fillMaxSize()
         ) {
             var isFullScreenImageVisible by remember {
-                mutableStateOf(false to Uri.EMPTY)
+                mutableStateOf(false)
             }
             OutlinedTextField(
                 value = searchQuery,
@@ -140,6 +143,17 @@ fun SearchScreenContent(
                         contentDescription = null
                     )
                 },
+                keyboardOptions = KeyboardOptions(
+                    imeAction = androidx.compose.ui.text.input.ImeAction.Search
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        action(SearchUiAction.OnSearchClicked)
+                    },
+                    onSearch = {
+                        action(SearchUiAction.OnSearchClicked)
+                    }
+                ),
                 trailingIcon = {
                     IconButton(
                         onClick = {
@@ -194,7 +208,7 @@ fun SearchScreenContent(
 
                     }
 
-                    state.second  -> {
+                    state.second -> {
                         EmptySearchResult()
                     }
 
@@ -212,7 +226,7 @@ fun SearchScreenContent(
                                     modifier = Modifier
                                         .size(150.dp)
                                         .clickable {
-                                            isFullScreenImageVisible = true to Uri.parse(uri)
+                                            isFullScreenImageVisible = true
                                         },
                                     contentAlignment = Alignment.Center,
                                 ) {
@@ -228,11 +242,11 @@ fun SearchScreenContent(
                 }
             }
 
-            AnimatedVisibility(isFullScreenImageVisible.first) {
+            AnimatedVisibility(isFullScreenImageVisible && images.isNotEmpty()) {
                 ModalBottomSheet(
                     dragHandle = {},
                     onDismissRequest = {
-                        isFullScreenImageVisible = false to Uri.EMPTY
+                        isFullScreenImageVisible = false
                     },
                     shape = RoundedCornerShape(0.dp),
                     sheetState = rememberModalBottomSheetState(
@@ -240,12 +254,66 @@ fun SearchScreenContent(
                     ),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    ZoomableImage(
-                        imageLink = isFullScreenImageVisible.second.toString(),
-                        closePreview = {
-                            isFullScreenImageVisible = false to Uri.EMPTY
+                    val coroutineScope = rememberCoroutineScope()
+                    var pagerState = rememberPagerState { images.size }
+                    val isZoomed = remember { mutableStateOf(false) }
+                    Box {
+                        HorizontalPager(
+                            state = pagerState,
+                            reverseLayout = true,
+                            userScrollEnabled = true
+                        ) { page ->
+                            ZoomableImage(
+                                imageLink = images[page],
+                                closePreview = {
+                                    isFullScreenImageVisible = false
+                                },
+                                onZoomChanged = { zoomLevel ->
+                                    isZoomed.value =
+                                        zoomLevel > 1f // Enable scrolling only if zoom level is 1
+                                }
+                            )
+
                         }
-                    )
+
+
+                            Card (
+                                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 8.dp),
+                                ){
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                IconButton(
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            pagerState.animateScrollToPage((pagerState.currentPage + 1)%pagerState.pageCount)
+                                        }
+                                    },
+
+                                    ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Default.ArrowBackIos,
+                                        contentDescription = null
+                                    )
+                                }
+                                Text(
+                                    text = "${pagerState.currentPage + 1}/${pagerState.pageCount}"
+                                )
+                                IconButton(
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            pagerState.animateScrollToPage((pagerState.currentPage - 1)%pagerState.pageCount)
+                                        }
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Default.ArrowForwardIos,
+                                        contentDescription = null
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
