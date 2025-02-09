@@ -256,7 +256,6 @@ fun SearchScreenContent(
                 ) {
                     val coroutineScope = rememberCoroutineScope()
                     var pagerState = rememberPagerState { images.size }
-                    val isZoomed = remember { mutableStateOf(false) }
                     Box {
                         HorizontalPager(
                             state = pagerState,
@@ -268,10 +267,6 @@ fun SearchScreenContent(
                                 closePreview = {
                                     isFullScreenImageVisible = false
                                 },
-                                onZoomChanged = { zoomLevel ->
-                                    isZoomed.value =
-                                        zoomLevel > 1f // Enable scrolling only if zoom level is 1
-                                }
                             )
 
                         }

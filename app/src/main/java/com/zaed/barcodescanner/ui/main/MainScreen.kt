@@ -10,6 +10,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -67,6 +68,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalContext
@@ -623,7 +625,7 @@ fun MainScreenContent(
 fun ZoomableImage(
     imageLink: String,
     closePreview: () -> Unit = {},
-    onZoomChanged: (Float) -> Unit = {}  // Callback to notify zoom level
+    onZoomChanged: (Float) -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -651,20 +653,34 @@ fun ZoomableImage(
             modifier = Modifier
                 .align(Alignment.Center)
                 .pointerInput(Unit) {
-                    detectTransformGestures { _, pan, zoom, _ ->
-                        scale *= zoom
-                        scale = scale.coerceIn(1f, 3f)
-                        offset = if (scale == 1f) Offset.Zero else offset + pan
+                    detectTapGestures(
+                        onDoubleTap = { tapOffset ->
+                            // Toggle between zoomed and unzoomed states
+                            val newScale = if (scale == 1f) 2f else 1f
+
+                            if (newScale > 1f) {
+                                // Calculate the focus point relative to the image's center
+                                val focusX = (tapOffset.x - size.width / 2) * (1 - newScale / scale)
+                                val focusY = (tapOffset.y - size.height / 2) * (1 - newScale / scale)
+                                offset = Offset(focusX, focusY)
+                            } else {
+                                // Reset offset when zooming out
+                                offset = Offset.Zero
+                            }
+
+                            // Update the scale
+                            scale = newScale
+                        }
+                    )
+                }
+                .pointerInput(scale) {
+                    if (scale > 1f) {
+                        detectTransformGestures { _, pan, _, _ ->
+                            offset += pan
+                        }
                     }
                 }
-                .pointerInteropFilter { event ->
-                    // Allow parent (HorizontalPager) to handle touch events if not zoomed
-                    if (scale == 1f) {
-                        false  // Don't consume the event; let the pager handle it
-                    } else {
-                        true   // Consume the event; handle panning/zooming
-                    }
-                }
+
                 .graphicsLayer(
                     scaleX = scale,
                     scaleY = scale,
