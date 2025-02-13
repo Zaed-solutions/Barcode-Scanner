@@ -38,8 +38,10 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
@@ -436,11 +438,13 @@ fun MainScreenContent(
                             style = MaterialTheme.typography.titleMedium,
                             text = stringResource(R.string.upload_all))
                     }
-                    FloatingActionButton(
-                        modifier = Modifier.weight(1f),
-                        elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation(
-                            defaultElevation = 5.dp
+                    Button(
+                        enabled = !isUploading,
+                        modifier = Modifier.height(56.dp).weight(1f),
+                        elevation = ButtonDefaults.buttonElevation(
+                            defaultElevation = 2.dp
                         ),
+                        shape = MaterialTheme.shapes.medium,
                         onClick = {
                             onAction(MainUiAction.OnScanBarcodeClicked)
                         }
